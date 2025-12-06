@@ -17,59 +17,168 @@
       padding: 20px;
     }
 
-    .chat-container {
+    .app-container {
       width: 100%;
-      max-width: 500px;
+      max-width: 900px;
       height: 90vh;
       max-height: 700px;
       background: #fff;
       border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       display: flex;
-      flex-direction: column;
       overflow: hidden;
     }
 
-    .chat-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: #1a1a2e;
       color: white;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
       padding: 20px;
-      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .chat-header h1 {
-      font-size: 1.5rem;
+    .sidebar-header h2 {
+      font-size: 1.2rem;
       font-weight: 600;
     }
 
-    .user-info {
+    .cmd-k-hint {
+      font-size: 11px;
+      background: rgba(255,255,255,0.1);
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: #aaa;
+    }
+
+    .sidebar-section {
+      padding: 15px 0;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #888;
+      padding: 0 20px 10px;
+      font-weight: 600;
+    }
+
+    .channel-item, .dm-item {
+      padding: 10px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+
+    .channel-item:hover, .dm-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .channel-item.active, .dm-item.active {
+      background: rgba(102, 126, 234, 0.3);
+    }
+
+    .channel-item span {
+      color: #888;
+    }
+
+    .dm-item img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+
+    .dm-item .online-dot {
+      width: 8px;
+      height: 8px;
+      background: #44b700;
+      border-radius: 50%;
+      margin-left: auto;
+    }
+
+    .user-panel {
+      margin-top: auto;
+      padding: 15px 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .user-info img {
-      width: 32px;
-      height: 32px;
+    .user-panel img {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      border: 2px solid white;
+    }
+
+    .user-panel-info {
+      flex: 1;
+    }
+
+    .user-panel-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .user-panel-status {
+      font-size: 11px;
+      color: #888;
     }
 
     .sign-out-btn {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
       border: none;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 15px;
+      color: #aaa;
+      padding: 6px 10px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
     }
 
     .sign-out-btn:hover {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Chat Area */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      background: #fff;
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-header-icon {
+      font-size: 20px;
+    }
+
+    .chat-header h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .chat-header-subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-left: auto;
     }
 
     .login-section {
@@ -80,6 +189,7 @@
       align-items: center;
       padding: 40px;
       text-align: center;
+      background: #f8f9fa;
     }
 
     .login-section h2 {
@@ -208,12 +318,6 @@
       box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
     }
 
-    .input-section button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
     .empty-state {
       text-align: center;
       color: #999;
@@ -229,48 +333,205 @@
     .hidden {
       display: none !important;
     }
+
+    /* Command Palette (Cmd+K) */
+    .cmd-palette-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 100px;
+      z-index: 1000;
+    }
+
+    .cmd-palette {
+      width: 500px;
+      max-width: 90%;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .cmd-palette-input {
+      width: 100%;
+      padding: 20px;
+      border: none;
+      font-size: 18px;
+      outline: none;
+      border-bottom: 1px solid #eee;
+    }
+
+    .cmd-palette-results {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .cmd-palette-section {
+      padding: 10px 0;
+    }
+
+    .cmd-palette-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #888;
+      padding: 5px 20px;
+      font-weight: 600;
+    }
+
+    .cmd-palette-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.1s;
+    }
+
+    .cmd-palette-item:hover, .cmd-palette-item.selected {
+      background: #f0f0f0;
+    }
+
+    .cmd-palette-item img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    .cmd-palette-item-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+    }
+
+    .cmd-palette-item-info {
+      flex: 1;
+    }
+
+    .cmd-palette-item-name {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .cmd-palette-item-hint {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .cmd-palette-empty {
+      padding: 30px;
+      text-align: center;
+      color: #888;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      .app-container {
+        max-width: 100%;
+        border-radius: 0;
+        height: 100vh;
+        max-height: none;
+      }
+      body {
+        padding: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="chat-container">
-    <div class="chat-header">
-      <h1>Poppy Chat</h1>
-      <div class="user-info hidden" id="userInfo">
-        <img id="userPhoto" src="" alt="Profile">
-        <button class="sign-out-btn" onclick="signOutUser()">Sign Out</button>
+  <!-- Command Palette -->
+  <div class="cmd-palette-overlay hidden" id="cmdPalette" onclick="closeCmdPalette(event)">
+    <div class="cmd-palette" onclick="event.stopPropagation()">
+      <input type="text" class="cmd-palette-input" id="cmdInput" placeholder="Search people to message..." oninput="filterUsers()">
+      <div class="cmd-palette-results" id="cmdResults">
+        <div class="cmd-palette-empty">Start typing to search...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar hidden" id="sidebar">
+      <div class="sidebar-header">
+        <h2>Poppy Chat</h2>
+        <span class="cmd-k-hint">⌘K</span>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Channels</div>
+        <div class="channel-item active" onclick="switchToChannel('general')" id="channel-general">
+          <span>#</span> general
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Direct Messages</div>
+        <div id="dmList"></div>
+      </div>
+
+      <div class="user-panel" id="userPanel">
+        <img id="sidebarUserPhoto" src="" alt="Profile">
+        <div class="user-panel-info">
+          <div class="user-panel-name" id="sidebarUserName">User</div>
+          <div class="user-panel-status">Online</div>
+        </div>
+        <button class="sign-out-btn" onclick="signOutUser()">Sign out</button>
       </div>
     </div>
 
-    <div class="login-section" id="loginSection">
-      <h2>Welcome to Poppy Chat</h2>
-      <p>Sign in to start chatting with your friends</p>
-      <button class="google-btn" onclick="signInWithGoogle()">
-        <svg viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Sign in with Google
-      </button>
-    </div>
-
-    <div class="messages hidden" id="messages">
-      <div class="empty-state">
-        <span>💬</span>
-        <p>No messages yet. Say hi!</p>
+    <!-- Chat Area -->
+    <div class="chat-container">
+      <div class="chat-header hidden" id="chatHeader">
+        <span class="chat-header-icon" id="chatIcon">#</span>
+        <h1 id="chatTitle">general</h1>
+        <span class="chat-header-subtitle" id="chatSubtitle">Team chat</span>
       </div>
-    </div>
 
-    <div class="input-section hidden" id="inputSection">
-      <input type="text" id="messageInput" placeholder="Type a message...">
-      <button id="sendBtn" onclick="sendMessage()">➤</button>
+      <div class="login-section" id="loginSection">
+        <h2>Welcome to Poppy Chat</h2>
+        <p>Sign in to start chatting with your team</p>
+        <button class="google-btn" onclick="signInWithGoogle()">
+          <svg viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Sign in with Google
+        </button>
+      </div>
+
+      <div class="messages hidden" id="messages">
+        <div class="empty-state">
+          <span>💬</span>
+          <p>No messages yet. Say hi!</p>
+        </div>
+      </div>
+
+      <div class="input-section hidden" id="inputSection">
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button id="sendBtn" onclick="sendMessage()">➤</button>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, getDoc, query, orderBy, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -289,7 +550,12 @@
     const provider = new GoogleAuthProvider();
 
     let currentUser = null;
+    let allUsers = [];
+    let currentChat = { type: 'channel', id: 'general' };
+    let unsubscribeMessages = null;
+    let activeDMs = new Set(JSON.parse(localStorage.getItem('activeDMs') || '[]'));
 
+    // Auth functions
     window.signInWithGoogle = async function() {
       try {
         await signInWithPopup(auth, provider);
@@ -307,52 +573,105 @@
       }
     };
 
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-      if (user) {
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('messages').classList.remove('hidden');
-        document.getElementById('inputSection').classList.remove('hidden');
-        document.getElementById('userInfo').classList.remove('hidden');
-        document.getElementById('userPhoto').src = user.photoURL || '';
-        loadMessages();
-      } else {
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('messages').classList.add('hidden');
-        document.getElementById('inputSection').classList.add('hidden');
-        document.getElementById('userInfo').classList.add('hidden');
-      }
-    });
-
-    window.sendMessage = async function() {
-      const input = document.getElementById('messageInput');
-      const text = input.value.trim();
-      if (!text || !currentUser) return;
-
-      input.value = '';
-      input.focus();
-
+    // Save user to Firestore
+    async function saveUser(user) {
       try {
-        await addDoc(collection(db, 'messages'), {
-          text: text,
-          sender: currentUser.displayName || currentUser.email,
-          senderId: currentUser.uid,
-          photoURL: currentUser.photoURL || '',
-          timestamp: serverTimestamp()
-        });
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          displayName: user.displayName || user.email,
+          email: user.email,
+          photoURL: user.photoURL || '',
+          lastSeen: serverTimestamp()
+        }, { merge: true });
       } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Failed to send message. Please try again.');
+        console.error('Error saving user:', error);
       }
+    }
+
+    // Load all users
+    function loadUsers() {
+      onSnapshot(collection(db, 'users'), (snapshot) => {
+        allUsers = [];
+        snapshot.forEach((doc) => {
+          const user = doc.data();
+          if (currentUser && user.uid !== currentUser.uid) {
+            allUsers.push(user);
+          }
+        });
+        renderDMList();
+      });
+    }
+
+    // Render DM list in sidebar
+    function renderDMList() {
+      const dmList = document.getElementById('dmList');
+      dmList.innerHTML = '';
+
+      activeDMs.forEach(odMUserId => {
+        const user = allUsers.find(u => u.uid === odMUserId);
+        if (user) {
+          const div = document.createElement('div');
+          div.className = `dm-item ${currentChat.type === 'dm' && currentChat.id === user.uid ? 'active' : ''}`;
+          div.onclick = () => switchToDM(user);
+          div.innerHTML = `
+            <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName)}" alt="${user.displayName}">
+            <span>${user.displayName}</span>
+          `;
+          dmList.appendChild(div);
+        }
+      });
+    }
+
+    // Switch to channel
+    window.switchToChannel = function(channelId) {
+      currentChat = { type: 'channel', id: channelId };
+      document.getElementById('chatIcon').textContent = '#';
+      document.getElementById('chatTitle').textContent = channelId;
+      document.getElementById('chatSubtitle').textContent = 'Team chat';
+
+      document.querySelectorAll('.channel-item, .dm-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('channel-' + channelId)?.classList.add('active');
+
+      loadMessages();
     };
 
-    document.getElementById('messageInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
+    // Switch to DM
+    window.switchToDM = function(user) {
+      currentChat = { type: 'dm', id: user.uid, user: user };
+      document.getElementById('chatIcon').textContent = '💬';
+      document.getElementById('chatTitle').textContent = user.displayName;
+      document.getElementById('chatSubtitle').textContent = 'Direct message';
 
+      // Add to active DMs
+      activeDMs.add(user.uid);
+      localStorage.setItem('activeDMs', JSON.stringify([...activeDMs]));
+
+      document.querySelectorAll('.channel-item, .dm-item').forEach(el => el.classList.remove('active'));
+      renderDMList();
+
+      loadMessages();
+      closeCmdPalette();
+    };
+
+    // Get DM conversation ID (sorted to be consistent)
+    function getDMId(uid1, uid2) {
+      return [uid1, uid2].sort().join('_');
+    }
+
+    // Load messages for current chat
     function loadMessages() {
-      const q = query(collection(db, 'messages'), orderBy('timestamp', 'asc'));
-      onSnapshot(q, (snapshot) => {
+      if (unsubscribeMessages) unsubscribeMessages();
+
+      let messagesRef;
+      if (currentChat.type === 'channel') {
+        messagesRef = collection(db, 'channels', currentChat.id, 'messages');
+      } else {
+        const dmId = getDMId(currentUser.uid, currentChat.id);
+        messagesRef = collection(db, 'dms', dmId, 'messages');
+      }
+
+      const q = query(messagesRef, orderBy('timestamp', 'asc'));
+      unsubscribeMessages = onSnapshot(q, (snapshot) => {
         const messagesDiv = document.getElementById('messages');
 
         if (snapshot.empty) {
@@ -385,7 +704,124 @@
       });
     }
 
+    // Send message
+    window.sendMessage = async function() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text || !currentUser) return;
+
+      input.value = '';
+      input.focus();
+
+      try {
+        let messagesRef;
+        if (currentChat.type === 'channel') {
+          messagesRef = collection(db, 'channels', currentChat.id, 'messages');
+        } else {
+          const dmId = getDMId(currentUser.uid, currentChat.id);
+          messagesRef = collection(db, 'dms', dmId, 'messages');
+        }
+
+        await addDoc(messagesRef, {
+          text: text,
+          sender: currentUser.displayName || currentUser.email,
+          senderId: currentUser.uid,
+          photoURL: currentUser.photoURL || '',
+          timestamp: serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    };
+
+    // Command palette
+    window.openCmdPalette = function() {
+      document.getElementById('cmdPalette').classList.remove('hidden');
+      document.getElementById('cmdInput').value = '';
+      document.getElementById('cmdInput').focus();
+      filterUsers();
+    };
+
+    window.closeCmdPalette = function(event) {
+      if (!event || event.target.id === 'cmdPalette') {
+        document.getElementById('cmdPalette').classList.add('hidden');
+      }
+    };
+
+    window.filterUsers = function() {
+      const query = document.getElementById('cmdInput').value.toLowerCase();
+      const results = document.getElementById('cmdResults');
+
+      const filtered = allUsers.filter(u =>
+        u.displayName?.toLowerCase().includes(query) ||
+        u.email?.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        results.innerHTML = '<div class="cmd-palette-empty">No users found</div>';
+        return;
+      }
+
+      results.innerHTML = `
+        <div class="cmd-palette-section">
+          <div class="cmd-palette-section-title">People</div>
+          ${filtered.map(user => `
+            <div class="cmd-palette-item" onclick="switchToDM(${JSON.stringify(user).replace(/"/g, '&quot;')})">
+              <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName)}" alt="${user.displayName}">
+              <div class="cmd-palette-item-info">
+                <div class="cmd-palette-item-name">${escapeHtml(user.displayName)}</div>
+                <div class="cmd-palette-item-hint">${escapeHtml(user.email)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    };
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (currentUser) openCmdPalette();
+      }
+      if (e.key === 'Escape') {
+        closeCmdPalette();
+      }
+    });
+
+    document.getElementById('messageInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Auth state change
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if (user) {
+        saveUser(user);
+        loadUsers();
+
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('sidebar').classList.remove('hidden');
+        document.getElementById('chatHeader').classList.remove('hidden');
+        document.getElementById('messages').classList.remove('hidden');
+        document.getElementById('inputSection').classList.remove('hidden');
+
+        document.getElementById('sidebarUserPhoto').src = user.photoURL || '';
+        document.getElementById('sidebarUserName').textContent = user.displayName || user.email;
+
+        loadMessages();
+      } else {
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('sidebar').classList.add('hidden');
+        document.getElementById('chatHeader').classList.add('hidden');
+        document.getElementById('messages').classList.add('hidden');
+        document.getElementById('inputSection').classList.add('hidden');
+      }
+    });
+
     function escapeHtml(text) {
+      if (!text) return '';
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
