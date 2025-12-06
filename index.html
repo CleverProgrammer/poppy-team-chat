@@ -749,25 +749,35 @@
       }
     };
 
+    let selectedIndex = 0;
+    let filteredUsers = [];
+
     window.filterUsers = function() {
       const query = document.getElementById('cmdInput').value.toLowerCase();
       const results = document.getElementById('cmdResults');
 
-      const filtered = allUsers.filter(u =>
+      filteredUsers = allUsers.filter(u =>
         u.displayName?.toLowerCase().includes(query) ||
         u.email?.toLowerCase().includes(query)
       );
 
-      if (filtered.length === 0) {
+      selectedIndex = 0; // Auto-select first result
+
+      if (filteredUsers.length === 0) {
         results.innerHTML = '<div class="cmd-palette-empty">No users found</div>';
         return;
       }
 
+      renderCmdResults();
+    };
+
+    function renderCmdResults() {
+      const results = document.getElementById('cmdResults');
       results.innerHTML = `
         <div class="cmd-palette-section">
           <div class="cmd-palette-section-title">People</div>
-          ${filtered.map(user => `
-            <div class="cmd-palette-item" onclick="switchToDM(${JSON.stringify(user).replace(/"/g, '&quot;')})">
+          ${filteredUsers.map((user, index) => `
+            <div class="cmd-palette-item ${index === selectedIndex ? 'selected' : ''}" onclick="switchToDM(${JSON.stringify(user).replace(/"/g, '&quot;')})">
               <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName)}" alt="${user.displayName}">
               <div class="cmd-palette-item-info">
                 <div class="cmd-palette-item-name">${escapeHtml(user.displayName)}</div>
@@ -777,14 +787,35 @@
           `).join('')}
         </div>
       `;
-    };
+    }
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         if (currentUser) openCmdPalette();
+        return;
       }
+
+      const cmdPalette = document.getElementById('cmdPalette');
+      if (!cmdPalette.classList.contains('hidden')) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          selectedIndex = Math.min(selectedIndex + 1, filteredUsers.length - 1);
+          renderCmdResults();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          selectedIndex = Math.max(selectedIndex - 1, 0);
+          renderCmdResults();
+        } else if (e.key === 'Enter' && filteredUsers.length > 0) {
+          e.preventDefault();
+          switchToDM(filteredUsers[selectedIndex]);
+        } else if (e.key === 'Escape') {
+          closeCmdPalette();
+        }
+        return;
+      }
+
       if (e.key === 'Escape') {
         closeCmdPalette();
       }
