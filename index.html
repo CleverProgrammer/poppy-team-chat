@@ -987,19 +987,50 @@
     let isAIProcessing = false;
     let replyingTo = null; // { msgId, sender, text }
 
-    // Claude API config - stored in localStorage for security
-    let CLAUDE_API_KEY = localStorage.getItem('poppyClaudeApiKey') || '';
+    // Claude API config - stored in Firebase so only one person needs to set it
+    let CLAUDE_API_KEY = '';
 
-    window.setClaudeApiKey = function() {
-      const key = prompt('Enter your Claude API key:');
+    // Load API key from Firebase on startup
+    async function loadApiKey() {
+      try {
+        const configDoc = await getDoc(doc(db, 'config', 'claude'));
+        if (configDoc.exists()) {
+          CLAUDE_API_KEY = configDoc.data().apiKey || '';
+        }
+      } catch (e) {
+        console.log('No API key configured yet');
+      }
+    }
+
+    window.setClaudeApiKey = async function() {
+      const key = prompt('Enter your Claude API key (this will be shared with the team):');
       if (key && key.startsWith('sk-ant-')) {
-        localStorage.setItem('poppyClaudeApiKey', key);
-        CLAUDE_API_KEY = key;
-        alert('API key saved! Poppy AI is now ready.');
+        try {
+          await setDoc(doc(db, 'config', 'claude'), { apiKey: key });
+          CLAUDE_API_KEY = key;
+          alert('API key saved! Poppy AI is now ready for everyone.');
+        } catch (e) {
+          alert('Failed to save API key: ' + e.message);
+        }
       } else if (key) {
         alert('Invalid API key format. Should start with sk-ant-');
       }
     };
+
+    window.resetClaudeApiKey = async function() {
+      if (confirm('Reset the Claude API key? You will need to enter a new one.')) {
+        try {
+          await setDoc(doc(db, 'config', 'claude'), { apiKey: '' });
+          CLAUDE_API_KEY = '';
+          alert('API key reset. Use setClaudeApiKey() to set a new one.');
+        } catch (e) {
+          alert('Failed to reset: ' + e.message);
+        }
+      }
+    };
+
+    // Load API key immediately
+    loadApiKey();
 
     // Track most used reactions (stored in localStorage)
     const DEFAULT_REACTIONS = ['👍', '❤️', '🤣', '🔥'];
@@ -1052,14 +1083,18 @@
     async function askPoppy(userQuestion) {
       if (isAIProcessing) return;
 
-      // Check for API key
+      // Check for API key - reload from Firebase in case it was just set
       if (!CLAUDE_API_KEY) {
-        const key = prompt('To use Poppy AI, please enter your Claude API key:');
+        await loadApiKey();
+      }
+
+      if (!CLAUDE_API_KEY) {
+        const key = prompt('To use Poppy AI, please enter your Claude API key (will be shared with team):');
         if (key && key.startsWith('sk-ant-')) {
-          localStorage.setItem('poppyClaudeApiKey', key);
+          await setDoc(doc(db, 'config', 'claude'), { apiKey: key });
           CLAUDE_API_KEY = key;
         } else {
-          alert('Invalid or missing API key. Poppy AI needs a valid Claude API key.');
+          alert('Invalid or missing API key. Poppy AI needs a valid Claude API key.\n\nTo reset a bad key, run resetClaudeApiKey() in the browser console.');
           return;
         }
       }
