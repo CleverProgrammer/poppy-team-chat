@@ -238,22 +238,35 @@
       background: #f8f9fa;
     }
 
-    .message {
+    .message-wrapper {
+      display: flex;
+      flex-direction: column;
       max-width: 80%;
+      position: relative;
+    }
+
+    .message-wrapper.sent {
+      align-self: flex-end;
+    }
+
+    .message-wrapper.received {
+      align-self: flex-start;
+    }
+
+    .message {
       padding: 12px 16px;
       border-radius: 18px;
       word-wrap: break-word;
+      position: relative;
     }
 
-    .message.sent {
-      align-self: flex-end;
+    .message-wrapper.sent .message {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border-bottom-right-radius: 4px;
     }
 
-    .message.received {
-      align-self: flex-start;
+    .message-wrapper.received .message {
       background: white;
       color: #333;
       border-bottom-left-radius: 4px;
@@ -277,6 +290,124 @@
       opacity: 0.6;
       margin-top: 4px;
       text-align: right;
+    }
+
+    /* Reactions */
+    .reaction-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .message-wrapper:hover .reaction-btn {
+      opacity: 1;
+    }
+
+    .reaction-btn:hover {
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .message-wrapper.sent .reaction-btn {
+      left: -36px;
+    }
+
+    .message-wrapper.received .reaction-btn {
+      right: -36px;
+    }
+
+    .reaction-picker {
+      position: absolute;
+      background: white;
+      border-radius: 20px;
+      padding: 6px 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      display: flex;
+      gap: 4px;
+      z-index: 100;
+      top: -40px;
+    }
+
+    .message-wrapper.sent .reaction-picker {
+      right: 0;
+    }
+
+    .message-wrapper.received .reaction-picker {
+      left: 0;
+    }
+
+    .reaction-picker span {
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .reaction-picker span:hover {
+      transform: scale(1.3);
+      background: #f0f0f0;
+    }
+
+    .reactions-display {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .message-wrapper.sent .reactions-display {
+      justify-content: flex-end;
+    }
+
+    .reaction-badge {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .reaction-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .reaction-badge.mine {
+      background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+      border-color: #667eea;
+    }
+
+    .reaction-badge .count {
+      font-size: 12px;
+      color: #666;
+    }
+
+    @keyframes reaction-pop {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+
+    .reaction-badge.new {
+      animation: reaction-pop 0.3s ease-out;
     }
 
     .input-section {
@@ -531,7 +662,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, getDoc, query, orderBy, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, query, orderBy, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -659,14 +790,18 @@
     }
 
     // Load messages for current chat
+    let currentMessagesPath = '';
+
     function loadMessages() {
       if (unsubscribeMessages) unsubscribeMessages();
 
       let messagesRef;
       if (currentChat.type === 'channel') {
+        currentMessagesPath = `channels/${currentChat.id}/messages`;
         messagesRef = collection(db, 'channels', currentChat.id, 'messages');
       } else {
         const dmId = getDMId(currentUser.uid, currentChat.id);
+        currentMessagesPath = `dms/${dmId}/messages`;
         messagesRef = collection(db, 'dms', dmId, 'messages');
       }
 
@@ -685,24 +820,109 @@
         }
 
         messagesDiv.innerHTML = '';
-        snapshot.forEach((doc) => {
-          const msg = doc.data();
+        snapshot.forEach((docSnap) => {
+          const msg = docSnap.data();
+          const msgId = docSnap.id;
           const isSent = currentUser && msg.senderId === currentUser.uid;
           const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
-          const messageEl = document.createElement('div');
-          messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
-          messageEl.innerHTML = `
-            ${!isSent ? `<div class="sender">${escapeHtml(msg.sender)}</div>` : ''}
-            <div class="text">${escapeHtml(msg.text)}</div>
-            <div class="time">${time}</div>
+          const wrapperEl = document.createElement('div');
+          wrapperEl.className = `message-wrapper ${isSent ? 'sent' : 'received'}`;
+          wrapperEl.dataset.msgId = msgId;
+
+          const reactionsHtml = renderReactions(msg.reactions || {}, msgId);
+
+          wrapperEl.innerHTML = `
+            <div class="message">
+              ${!isSent ? `<div class="sender">${escapeHtml(msg.sender)}</div>` : ''}
+              <div class="text">${escapeHtml(msg.text)}</div>
+              <div class="time">${time}</div>
+            </div>
+            <button class="reaction-btn" onclick="toggleReactionPicker('${msgId}')">😊</button>
+            <div class="reaction-picker hidden" id="picker-${msgId}">
+              <span onclick="addReaction('${msgId}', '👍')">👍</span>
+              <span onclick="addReaction('${msgId}', '❤️')">❤️</span>
+              <span onclick="addReaction('${msgId}', '😂')">😂</span>
+              <span onclick="addReaction('${msgId}', '😮')">😮</span>
+              <span onclick="addReaction('${msgId}', '😢')">😢</span>
+              <span onclick="addReaction('${msgId}', '🔥')">🔥</span>
+            </div>
+            ${reactionsHtml}
           `;
-          messagesDiv.appendChild(messageEl);
+          messagesDiv.appendChild(wrapperEl);
         });
 
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
     }
+
+    function renderReactions(reactions, msgId) {
+      const reactionCounts = {};
+      const userReactions = {};
+
+      // Count reactions and track who reacted
+      for (const [odUserId, emoji] of Object.entries(reactions)) {
+        if (!reactionCounts[emoji]) {
+          reactionCounts[emoji] = { count: 0, users: [] };
+        }
+        reactionCounts[emoji].count++;
+        reactionCounts[emoji].users.push(odUserId);
+        if (currentUser && odUserId === currentUser.uid) {
+          userReactions[emoji] = true;
+        }
+      }
+
+      if (Object.keys(reactionCounts).length === 0) return '';
+
+      const badges = Object.entries(reactionCounts).map(([emoji, data]) => {
+        const isMine = userReactions[emoji];
+        return `<div class="reaction-badge ${isMine ? 'mine' : ''}" onclick="addReaction('${msgId}', '${emoji}')">
+          ${emoji}<span class="count">${data.count}</span>
+        </div>`;
+      }).join('');
+
+      return `<div class="reactions-display">${badges}</div>`;
+    }
+
+    window.toggleReactionPicker = function(msgId) {
+      // Close all other pickers
+      document.querySelectorAll('.reaction-picker').forEach(p => {
+        if (p.id !== `picker-${msgId}`) p.classList.add('hidden');
+      });
+      const picker = document.getElementById(`picker-${msgId}`);
+      picker.classList.toggle('hidden');
+    };
+
+    window.addReaction = async function(msgId, emoji) {
+      if (!currentUser) return;
+
+      const picker = document.getElementById(`picker-${msgId}`);
+      if (picker) picker.classList.add('hidden');
+
+      try {
+        const msgRef = doc(db, currentMessagesPath, msgId);
+        const msgSnap = await getDoc(msgRef);
+        const reactions = msgSnap.data()?.reactions || {};
+
+        // Toggle reaction: remove if same emoji, otherwise set new one
+        if (reactions[currentUser.uid] === emoji) {
+          delete reactions[currentUser.uid];
+        } else {
+          reactions[currentUser.uid] = emoji;
+        }
+
+        await updateDoc(msgRef, { reactions });
+      } catch (error) {
+        console.error('Error adding reaction:', error);
+      }
+    };
+
+    // Close reaction picker when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.reaction-btn') && !e.target.closest('.reaction-picker')) {
+        document.querySelectorAll('.reaction-picker').forEach(p => p.classList.add('hidden'));
+      }
+    });
 
     // Send message
     window.sendMessage = async function() {
