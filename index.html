@@ -1112,22 +1112,23 @@
         console.log('🤖 Poppy AI: Got', chatHistory.length, 'messages');
         const context = buildChatContext(chatHistory);
 
-        const systemPrompt = `You are Poppy, a helpful and friendly AI assistant integrated into the Poppy Chat team messaging app. You have access to the recent conversation history from the #general channel.
+        const systemPrompt = `You are Poppy, a friendly AI assistant in Poppy Chat.
 
-Your personality:
-- Friendly, helpful, and occasionally witty
-- You know the team members by name from the chat history
-- Keep responses concise but helpful (2-3 sentences unless more detail is needed)
-- You can reference past conversations when relevant
+IMPORTANT FORMATTING RULES:
+- NO markdown (no **, no *, no #, no \`, no bullet points)
+- Write plain text only, like a text message
+- Keep responses SHORT (1-3 sentences max)
+- Be casual and conversational
+- Use emojis sparingly if it fits
 
-Here is the recent chat history from #general for context:
+You know the team from this chat history:
 ---
 ${context}
 ---
 
-When responding, be conversational and natural. If someone asks about past conversations, you can reference them. If asked something you don't know, be honest about it.`;
+Be helpful, witty, and brief. Reference past convos when relevant.`;
 
-        console.log('🤖 Poppy AI: Calling Claude API...');
+        console.log('🤖 Poppy AI: Calling Claude API with extended thinking...');
         const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -1137,8 +1138,12 @@ When responding, be conversational and natural. If someone asks about past conve
             'anthropic-dangerous-direct-browser-access': 'true'
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1024,
+            model: 'claude-opus-4-20250514',
+            max_tokens: 16000,
+            thinking: {
+              type: 'enabled',
+              budget_tokens: 10000
+            },
             system: systemPrompt,
             messages: [
               { role: 'user', content: userQuestion }
@@ -1156,7 +1161,9 @@ When responding, be conversational and natural. If someone asks about past conve
 
         const data = await response.json();
         console.log('🤖 Poppy AI: Response data:', data);
-        const aiResponse = data.content[0].text;
+        // Extended thinking returns multiple content blocks - find the text one
+        const textBlock = data.content.find(block => block.type === 'text');
+        const aiResponse = textBlock ? textBlock.text : 'Hmm, I got confused there. Try asking again!';
 
         // Remove typing indicator and post AI response
         removeAITyping();
@@ -1680,10 +1687,60 @@ When responding, be conversational and natural. If someone asks about past conve
       input.value = '';
       input.focus();
 
+      // Check for slash commands first
+      if (text.startsWith('/')) {
+        const parts = text.substring(1).split(' ');
+        const command = parts[0].toLowerCase();
+        const args = parts.slice(1).join(' ');
+
+        // Handle instant commands (don't send as message)
+        if (command === 'shrug') {
+          input.value = '¯\\_(ツ)_/¯';
+          return sendMessage();
+        }
+        if (command === 'tableflip') {
+          input.value = '(╯°□°)╯︵ ┻━┻';
+          return sendMessage();
+        }
+        if (command === 'unflip') {
+          input.value = '┬─┬ノ( º _ ºノ)';
+          return sendMessage();
+        }
+        if (command === 'lenny') {
+          input.value = '( ͡° ͜ʖ ͡°)';
+          return sendMessage();
+        }
+        if (command === 'reset-api-key') {
+          resetClaudeApiKey();
+          return;
+        }
+        if (command === 'poppy') {
+          if (args) {
+            // Send the question as a message, then trigger AI
+            input.value = args;
+            await sendMessageInternal(args, true); // true = trigger AI
+            return;
+          } else {
+            alert('Usage: /poppy <your question>');
+            return;
+          }
+        }
+        if (command === 'giphy') {
+          alert('Giphy integration coming soon! 🎬');
+          return;
+        }
+      }
+
       // Check for @Poppy mention - match @Poppy anywhere in text and capture everything after
       const poppyMention = text.match(/@poppy\s*(.*)/i);
       const aiQuestion = poppyMention && poppyMention[1]?.trim() ? poppyMention[1].trim() : null;
       console.log('Poppy check:', { text, poppyMention, aiQuestion });
+
+      await sendMessageInternal(text, !!aiQuestion, aiQuestion);
+    };
+
+    // Internal function to send message
+    async function sendMessageInternal(text, triggerAI = false, aiQuestion = null) {
 
       try {
         let messagesRef;
@@ -1714,15 +1771,15 @@ When responding, be conversational and natural. If someone asks about past conve
 
         await addDoc(messagesRef, messageData);
 
-        // If mentioned @Poppy, trigger AI response
-        if (aiQuestion) {
-          askPoppy(aiQuestion);
+        // Trigger AI response if needed
+        if (triggerAI) {
+          askPoppy(aiQuestion || text);
         }
       } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');
       }
-    };
+    }
 
     // Command palette
     window.openCmdPalette = function() {
@@ -1814,11 +1871,22 @@ When responding, be conversational and natural. If someone asks about past conve
       if (e.key === 'Enter' && !mentionPickerActive) sendMessage();
     });
 
-    // Mention picker
+    // Mention and command picker
     let mentionPickerActive = false;
     let mentionSelectedIndex = 0;
     let mentionOptions = [];
     let mentionStartPos = -1;
+    let mentionType = 'mention'; // 'mention' or 'command'
+
+    const SLASH_COMMANDS = [
+      { name: 'poppy', hint: 'Ask Poppy AI a question', icon: '🤖' },
+      { name: 'giphy', hint: 'Search for a GIF', icon: '🎬' },
+      { name: 'shrug', hint: 'Send ¯\\_(ツ)_/¯', icon: '🤷' },
+      { name: 'tableflip', hint: 'Send (╯°□°)╯︵ ┻━┻', icon: '😤' },
+      { name: 'unflip', hint: 'Send ┬─┬ノ( º _ ºノ)', icon: '😌' },
+      { name: 'lenny', hint: 'Send ( ͡° ͜ʖ ͡°)', icon: '😏' },
+      { name: 'reset-api-key', hint: 'Reset the Claude API key', icon: '🔑' },
+    ];
 
     function getMentionOptions(query) {
       const options = [
@@ -1832,10 +1900,15 @@ When responding, be conversational and natural. If someone asks about past conve
       return options.filter(o => o.name.toLowerCase().includes(query.toLowerCase()));
     }
 
-    function showMentionPicker(query) {
-      mentionOptions = getMentionOptions(query);
+    function getCommandOptions(query) {
+      return SLASH_COMMANDS.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
+    }
+
+    function showMentionPicker(query, type = 'mention') {
+      mentionType = type;
+      mentionOptions = type === 'command' ? getCommandOptions(query) : getMentionOptions(query);
       mentionSelectedIndex = 0;
-      console.log('showMentionPicker called, options:', mentionOptions.length);
+      console.log('showMentionPicker called, type:', type, 'options:', mentionOptions.length);
 
       if (mentionOptions.length === 0) {
         hideMentionPicker();
@@ -1844,15 +1917,15 @@ When responding, be conversational and natural. If someone asks about past conve
 
       mentionPickerActive = true;
       const picker = document.getElementById('mentionPicker');
-      console.log('Picker element:', picker);
+      const title = type === 'command' ? 'Commands' : 'Mention someone';
       picker.innerHTML = `
-        <div class="mention-picker-title">Mention someone</div>
+        <div class="mention-picker-title">${title}</div>
         ${mentionOptions.map((opt, i) => `
           <div class="mention-item ${i === mentionSelectedIndex ? 'selected' : ''}" onclick="selectMention(${i})">
-            ${opt.type === 'bot'
+            ${type === 'command' || opt.type === 'bot'
               ? `<div class="mention-item-icon">${opt.icon}</div>`
               : `<img src="${opt.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(opt.name)}" alt="${opt.name}">`}
-            <span class="mention-item-name">${escapeHtml(opt.name)}</span>
+            <span class="mention-item-name">${type === 'command' ? '/' : ''}${escapeHtml(opt.name)}</span>
             <span class="mention-item-hint">${escapeHtml(opt.hint)}</span>
           </div>
         `).join('')}
@@ -1879,22 +1952,41 @@ When responding, be conversational and natural. If someone asks about past conve
       const input = document.getElementById('messageInput');
       const text = input.value;
 
-      // Replace @query with @Name
-      const beforeMention = text.substring(0, mentionStartPos);
-      const afterMention = text.substring(input.selectionStart);
-      input.value = beforeMention + '@' + opt.name + ' ' + afterMention;
-
-      hideMentionPicker();
-      input.focus();
-      // Set cursor position after the mention
-      const newPos = mentionStartPos + opt.name.length + 2;
-      input.setSelectionRange(newPos, newPos);
+      if (mentionType === 'command') {
+        // Handle slash command selection
+        const afterSlash = text.substring(input.selectionStart);
+        input.value = '/' + opt.name + ' ' + afterSlash.trim();
+        hideMentionPicker();
+        input.focus();
+        const newPos = opt.name.length + 2;
+        input.setSelectionRange(newPos, newPos);
+      } else {
+        // Handle @ mention selection
+        const beforeMention = text.substring(0, mentionStartPos);
+        const afterMention = text.substring(input.selectionStart);
+        input.value = beforeMention + '@' + opt.name + ' ' + afterMention;
+        hideMentionPicker();
+        input.focus();
+        const newPos = mentionStartPos + opt.name.length + 2;
+        input.setSelectionRange(newPos, newPos);
+      }
     };
 
     document.getElementById('messageInput').addEventListener('input', (e) => {
       const input = e.target;
       const text = input.value;
       const cursorPos = input.selectionStart;
+
+      // Check for / command at start of input
+      if (text.startsWith('/')) {
+        const query = text.substring(1, cursorPos);
+        // Only show command picker if no space yet (still typing command name)
+        if (!query.includes(' ')) {
+          mentionStartPos = 0;
+          showMentionPicker(query, 'command');
+          return;
+        }
+      }
 
       // Find @ before cursor (look backwards from cursor)
       let atPos = -1;
@@ -1916,7 +2008,7 @@ When responding, be conversational and natural. If someone asks about past conve
         const query = text.substring(atPos + 1, cursorPos);
         console.log('Showing mention picker for query:', query);
         mentionStartPos = atPos;
-        showMentionPicker(query);
+        showMentionPicker(query, 'mention');
       } else {
         hideMentionPicker();
       }
