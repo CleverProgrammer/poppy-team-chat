@@ -477,17 +477,23 @@
       position: relative;
     }
 
-    .input-section input {
+    .input-section textarea {
       flex: 1;
       padding: 12px 20px;
       border: 2px solid #e0e0e0;
-      border-radius: 25px;
+      border-radius: 20px;
       font-size: 15px;
       outline: none;
       transition: border-color 0.2s;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.4;
+      min-height: 50px;
+      max-height: 150px;
+      overflow-y: auto;
     }
 
-    .input-section input:focus {
+    .input-section textarea:focus {
       border-color: #667eea;
     }
 
@@ -952,7 +958,7 @@
       </div>
       <div class="input-section hidden" id="inputSection">
         <div class="mention-picker" id="mentionPicker"></div>
-        <input type="text" id="messageInput" placeholder="Type a message... (@ to mention)">
+        <textarea id="messageInput" placeholder="Type a message... (@ to mention, Shift+Enter for new line)" rows="1"></textarea>
         <button id="sendBtn" onclick="sendMessage()">➤</button>
       </div>
     </div>
@@ -1117,18 +1123,26 @@
         const systemPrompt = `You are Poppy, a friendly AI assistant in Poppy Chat.
 
 IMPORTANT FORMATTING RULES:
-- NO markdown (no **, no *, no #, no \`, no bullet points)
-- Write plain text only, like a text message
-- Keep responses SHORT (1-3 sentences max)
-- Be casual and conversational
-- Use emojis sparingly if it fits
+- NO markdown ever (no **, no *, no #, no \`, no - bullets, no numbered lists)
+- Write plain text only, like a casual text message
+- Use line breaks to separate thoughts (makes it easy to read!)
+- Keep responses SHORT but well-spaced
+- Be casual, friendly, and conversational
+- Use emojis sparingly if it fits the vibe
+
+EXAMPLE FORMAT:
+Hey! Great question.
+
+The answer is actually pretty simple - just do X and then Y.
+
+Let me know if that helps! 🙌
 
 You know the team from this chat history:
 ---
 ${context}
 ---
 
-Be helpful, witty, and brief. Reference past convos when relevant.`;
+Be helpful, witty, and brief. Use line breaks between thoughts for easy reading.`;
 
         console.log('🤖 Poppy AI: Calling Claude API with extended thinking...');
         const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1524,7 +1538,7 @@ Be helpful, witty, and brief. Reference past convos when relevant.`;
             <div class="message">
               ${senderHtml}
               ${replyHtml}
-              <div class="text">${escapeHtml(msg.text)}</div>
+              <div class="text">${formatMessageText(msg.text)}</div>
               <div class="time">${time}</div>
             </div>
             <div class="quick-reactions">
@@ -1869,8 +1883,17 @@ Be helpful, witty, and brief. Reference past convos when relevant.`;
       }
     });
 
-    document.getElementById('messageInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !mentionPickerActive) sendMessage();
+    document.getElementById('messageInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !mentionPickerActive) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Auto-resize textarea as user types
+    document.getElementById('messageInput').addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 150) + 'px';
     });
 
     // Mention and command picker
@@ -2072,6 +2095,12 @@ Be helpful, witty, and brief. Reference past convos when relevant.`;
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function formatMessageText(text) {
+      if (!text) return '';
+      // First escape HTML, then convert newlines to <br>
+      return escapeHtml(text).replace(/\n/g, '<br>');
     }
   </script>
 </body>
