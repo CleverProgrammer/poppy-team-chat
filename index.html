@@ -327,11 +327,11 @@
     }
 
     .message-wrapper.sent .quick-reactions {
-      left: -140px;
+      left: -160px;
     }
 
     .message-wrapper.received .quick-reactions {
-      right: -140px;
+      right: -160px;
     }
 
     .quick-reactions span {
@@ -472,6 +472,7 @@
       border-top: 1px solid #eee;
       display: flex;
       gap: 10px;
+      position: relative;
     }
 
     .input-section input {
@@ -622,6 +623,236 @@
       color: #888;
     }
 
+    /* AI Message Styling */
+    .message-wrapper.ai .message {
+      background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+      color: white;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-wrapper.ai .sender {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ai-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .ai-typing {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .ai-typing span {
+      width: 8px;
+      height: 8px;
+      background: #0072ff;
+      border-radius: 50%;
+      animation: typing-bounce 1.4s infinite ease-in-out;
+    }
+
+    .ai-typing span:nth-child(1) { animation-delay: 0s; }
+    .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing-bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .ai-hint {
+      font-size: 11px;
+      color: #888;
+      padding: 8px 20px;
+      text-align: center;
+      border-top: 1px solid #eee;
+    }
+
+    /* Reply styling */
+    .reply-preview {
+      background: rgba(0,0,0,0.05);
+      border-left: 3px solid #667eea;
+      padding: 6px 10px;
+      margin-bottom: 6px;
+      border-radius: 0 8px 8px 0;
+      font-size: 12px;
+      max-width: 100%;
+      cursor: pointer;
+    }
+
+    .reply-preview:hover {
+      background: rgba(0,0,0,0.08);
+    }
+
+    .message-wrapper.sent .reply-preview {
+      background: rgba(255,255,255,0.15);
+      border-left-color: rgba(255,255,255,0.5);
+    }
+
+    .reply-preview .reply-sender {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 2px;
+    }
+
+    .message-wrapper.sent .reply-preview .reply-sender {
+      color: rgba(255,255,255,0.9);
+    }
+
+    .reply-preview .reply-text {
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .message-wrapper.sent .reply-preview .reply-text {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .reply-bar {
+      display: none;
+      background: #f0f0f0;
+      padding: 10px 20px;
+      border-top: 1px solid #ddd;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .reply-bar.active {
+      display: flex;
+    }
+
+    .reply-bar-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .reply-bar-sender {
+      font-size: 12px;
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .reply-bar-text {
+      font-size: 13px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .reply-bar-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #888;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .reply-bar-close:hover {
+      color: #333;
+    }
+
+    .reply-btn {
+      background: none;
+      border: none;
+      font-size: 14px;
+      color: #888;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .reply-btn:hover {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    @keyframes highlight-msg {
+      0% { background: rgba(102, 126, 234, 0.3); }
+      100% { background: transparent; }
+    }
+
+    /* Mention picker */
+    .mention-picker {
+      position: absolute;
+      bottom: 100%;
+      left: 20px;
+      right: 20px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      z-index: 100;
+    }
+
+    .mention-picker.active {
+      display: block;
+    }
+
+    .mention-picker-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #888;
+      padding: 10px 15px 5px;
+      font-weight: 600;
+    }
+
+    .mention-item {
+      padding: 10px 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.1s;
+    }
+
+    .mention-item:hover, .mention-item.selected {
+      background: #f0f0f0;
+    }
+
+    .mention-item img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+
+    .mention-item-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .mention-item-name {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .mention-item-hint {
+      font-size: 12px;
+      color: #888;
+      margin-left: auto;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
@@ -710,8 +941,16 @@
         </div>
       </div>
 
+      <div class="reply-bar" id="replyBar">
+        <div class="reply-bar-content">
+          <div class="reply-bar-sender" id="replyBarSender">Replying to</div>
+          <div class="reply-bar-text" id="replyBarText">Message preview...</div>
+        </div>
+        <button class="reply-bar-close" onclick="cancelReply()">×</button>
+      </div>
       <div class="input-section hidden" id="inputSection">
-        <input type="text" id="messageInput" placeholder="Type a message...">
+        <div class="mention-picker" id="mentionPicker"></div>
+        <input type="text" id="messageInput" placeholder="Type a message... (@ to mention)">
         <button id="sendBtn" onclick="sendMessage()">➤</button>
       </div>
     </div>
@@ -745,6 +984,22 @@
     let unreadChats = new Set();
     let isPageVisible = true;
     let lastMessageTimestamps = {};
+    let isAIProcessing = false;
+    let replyingTo = null; // { msgId, sender, text }
+
+    // Claude API config - stored in localStorage for security
+    let CLAUDE_API_KEY = localStorage.getItem('poppyClaudeApiKey') || '';
+
+    window.setClaudeApiKey = function() {
+      const key = prompt('Enter your Claude API key:');
+      if (key && key.startsWith('sk-ant-')) {
+        localStorage.setItem('poppyClaudeApiKey', key);
+        CLAUDE_API_KEY = key;
+        alert('API key saved! Poppy AI is now ready.');
+      } else if (key) {
+        alert('Invalid API key format. Should start with sk-ant-');
+      }
+    };
 
     // Track most used reactions (stored in localStorage)
     const DEFAULT_REACTIONS = ['👍', '❤️', '🤣', '🔥'];
@@ -767,6 +1022,163 @@
     function trackReaction(emoji) {
       reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
       localStorage.setItem('reactionCounts', JSON.stringify(reactionCounts));
+    }
+
+    // AI Functions
+    async function getGeneralChatHistory() {
+      // Fetch messages from #general channel for AI context
+      const { getDocs, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      const messagesRef = collection(db, 'channels', 'general', 'messages');
+      const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(500)); // Get last 500 messages
+      const snapshot = await getDocs(q);
+
+      const messages = [];
+      snapshot.forEach((doc) => {
+        const msg = doc.data();
+        messages.unshift({ // unshift to reverse order (oldest first)
+          sender: msg.sender,
+          text: msg.text,
+          time: msg.timestamp?.toDate?.()?.toISOString?.() || 'unknown'
+        });
+      });
+      return messages;
+    }
+
+    function buildChatContext(messages) {
+      // Build a formatted string of chat history
+      return messages.map(m => `[${m.time}] ${m.sender}: ${m.text}`).join('\n');
+    }
+
+    async function askPoppy(userQuestion) {
+      if (isAIProcessing) return;
+
+      // Check for API key
+      if (!CLAUDE_API_KEY) {
+        const key = prompt('To use Poppy AI, please enter your Claude API key:');
+        if (key && key.startsWith('sk-ant-')) {
+          localStorage.setItem('poppyClaudeApiKey', key);
+          CLAUDE_API_KEY = key;
+        } else {
+          alert('Invalid or missing API key. Poppy AI needs a valid Claude API key.');
+          return;
+        }
+      }
+
+      isAIProcessing = true;
+      console.log('🤖 Poppy AI: Processing question:', userQuestion);
+
+      // Show typing indicator
+      showAITyping();
+
+      try {
+        // Get chat history from #general
+        console.log('🤖 Poppy AI: Fetching chat history...');
+        const chatHistory = await getGeneralChatHistory();
+        console.log('🤖 Poppy AI: Got', chatHistory.length, 'messages');
+        const context = buildChatContext(chatHistory);
+
+        const systemPrompt = `You are Poppy, a helpful and friendly AI assistant integrated into the Poppy Chat team messaging app. You have access to the recent conversation history from the #general channel.
+
+Your personality:
+- Friendly, helpful, and occasionally witty
+- You know the team members by name from the chat history
+- Keep responses concise but helpful (2-3 sentences unless more detail is needed)
+- You can reference past conversations when relevant
+
+Here is the recent chat history from #general for context:
+---
+${context}
+---
+
+When responding, be conversational and natural. If someone asks about past conversations, you can reference them. If asked something you don't know, be honest about it.`;
+
+        console.log('🤖 Poppy AI: Calling Claude API...');
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': CLAUDE_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages: [
+              { role: 'user', content: userQuestion }
+            ]
+          })
+        });
+
+        console.log('🤖 Poppy AI: Response status:', response.status);
+
+        if (!response.ok) {
+          const error = await response.text();
+          console.error('🤖 Poppy AI: API Error Response:', error);
+          throw new Error(`API error: ${error}`);
+        }
+
+        const data = await response.json();
+        console.log('🤖 Poppy AI: Response data:', data);
+        const aiResponse = data.content[0].text;
+
+        // Remove typing indicator and post AI response
+        removeAITyping();
+        await postAIMessage(aiResponse);
+
+      } catch (error) {
+        console.error('🤖 Poppy AI: Error:', error);
+        removeAITyping();
+        await postAIMessage(`Sorry, I had a problem: ${error.message}. Check the console for details! 🤖`);
+      } finally {
+        isAIProcessing = false;
+      }
+    }
+
+    function showAITyping() {
+      const messagesDiv = document.getElementById('messages');
+      const typingEl = document.createElement('div');
+      typingEl.className = 'message-wrapper received ai';
+      typingEl.id = 'ai-typing-indicator';
+      typingEl.innerHTML = `
+        <div class="message">
+          <div class="sender">🤖 Poppy <span class="ai-badge">AI</span></div>
+          <div class="ai-typing">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      `;
+      messagesDiv.appendChild(typingEl);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function removeAITyping() {
+      const typingEl = document.getElementById('ai-typing-indicator');
+      if (typingEl) typingEl.remove();
+    }
+
+    async function postAIMessage(text) {
+      // Post AI response to current chat
+      try {
+        let messagesRef;
+        if (currentChat.type === 'channel') {
+          messagesRef = collection(db, 'channels', currentChat.id, 'messages');
+        } else {
+          const dmId = getDMId(currentUser.uid, currentChat.id);
+          messagesRef = collection(db, 'dms', dmId, 'messages');
+        }
+
+        await addDoc(messagesRef, {
+          text: text,
+          sender: '🤖 Poppy',
+          senderId: 'ai-poppy',
+          isAI: true,
+          timestamp: serverTimestamp()
+        });
+      } catch (error) {
+        console.error('Error posting AI message:', error);
+      }
     }
 
     // Notification sound (base64 encoded short beep)
@@ -1042,22 +1454,37 @@
           const msg = docSnap.data();
           const msgId = docSnap.id;
           const isSent = currentUser && msg.senderId === currentUser.uid;
+          const isAI = msg.isAI || msg.senderId === 'ai-poppy';
           const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
           const wrapperEl = document.createElement('div');
-          wrapperEl.className = `message-wrapper ${isSent ? 'sent' : 'received'}`;
+          wrapperEl.className = `message-wrapper ${isSent ? 'sent' : 'received'} ${isAI ? 'ai' : ''}`;
           wrapperEl.dataset.msgId = msgId;
 
           const reactionsHtml = renderReactions(msg.reactions || {}, msgId);
 
           const topReactions = getTopReactions(4);
+          const senderHtml = isAI
+            ? `<div class="sender">${escapeHtml(msg.sender)} <span class="ai-badge">AI</span></div>`
+            : (!isSent ? `<div class="sender">${escapeHtml(msg.sender)}</div>` : '');
+
+          // Reply preview if this message is a reply
+          const replyHtml = msg.replyTo ? `
+            <div class="reply-preview" onclick="scrollToMessage('${msg.replyTo.msgId}')">
+              <div class="reply-sender">${escapeHtml(msg.replyTo.sender)}</div>
+              <div class="reply-text">${escapeHtml(msg.replyTo.text)}</div>
+            </div>
+          ` : '';
+
           wrapperEl.innerHTML = `
             <div class="message">
-              ${!isSent ? `<div class="sender">${escapeHtml(msg.sender)}</div>` : ''}
+              ${senderHtml}
+              ${replyHtml}
               <div class="text">${escapeHtml(msg.text)}</div>
               <div class="time">${time}</div>
             </div>
             <div class="quick-reactions">
+              <button class="reply-btn" onclick="startReply('${msgId}', '${escapeHtml(msg.sender).replace(/'/g, "\\'")}', '${escapeHtml(msg.text).replace(/'/g, "\\'").replace(/\n/g, ' ')}')">↩</button>
               ${topReactions.map(emoji => `<span onclick="addReaction('${msgId}', '${emoji}')">${emoji}</span>`).join('')}
               <button class="more-reactions-btn" onclick="toggleEmojiPanel('${msgId}')">+</button>
             </div>
@@ -1110,26 +1537,31 @@
     }
 
     function renderReactions(reactions, msgId) {
-      const reactionCounts = {};
+      const reactionCountsLocal = {};
       const userReactions = {};
 
       // Count reactions and track who reacted
       for (const [odUserId, emoji] of Object.entries(reactions)) {
-        if (!reactionCounts[emoji]) {
-          reactionCounts[emoji] = { count: 0, users: [] };
+        if (!reactionCountsLocal[emoji]) {
+          reactionCountsLocal[emoji] = { count: 0, userIds: [], userNames: [] };
         }
-        reactionCounts[emoji].count++;
-        reactionCounts[emoji].users.push(odUserId);
+        reactionCountsLocal[emoji].count++;
+        reactionCountsLocal[emoji].userIds.push(odUserId);
+        // Find user name from allUsers or currentUser
+        const user = allUsers.find(u => u.uid === odUserId);
+        const userName = user ? user.displayName : (currentUser && odUserId === currentUser.uid ? 'You' : 'Someone');
+        reactionCountsLocal[emoji].userNames.push(userName);
         if (currentUser && odUserId === currentUser.uid) {
           userReactions[emoji] = true;
         }
       }
 
-      if (Object.keys(reactionCounts).length === 0) return '';
+      if (Object.keys(reactionCountsLocal).length === 0) return '';
 
-      const badges = Object.entries(reactionCounts).map(([emoji, data]) => {
+      const badges = Object.entries(reactionCountsLocal).map(([emoji, data]) => {
         const isMine = userReactions[emoji];
-        return `<div class="reaction-badge ${isMine ? 'mine' : ''}" onclick="addReaction('${msgId}', '${emoji}')">
+        const tooltip = data.userNames.join(', ');
+        return `<div class="reaction-badge ${isMine ? 'mine' : ''}" onclick="addReaction('${msgId}', '${emoji}')" title="${escapeHtml(tooltip)}">
           ${emoji}<span class="count">${data.count}</span>
         </div>`;
       }).join('');
@@ -1144,6 +1576,30 @@
       });
       const panel = document.getElementById(`emoji-panel-${msgId}`);
       panel.classList.toggle('hidden');
+    };
+
+    // Reply functions
+    window.startReply = function(msgId, sender, text) {
+      replyingTo = { msgId, sender, text };
+      document.getElementById('replyBar').classList.add('active');
+      document.getElementById('replyBarSender').textContent = `Replying to ${sender}`;
+      document.getElementById('replyBarText').textContent = text.length > 50 ? text.substring(0, 50) + '...' : text;
+      document.getElementById('messageInput').focus();
+    };
+
+    window.cancelReply = function() {
+      replyingTo = null;
+      document.getElementById('replyBar').classList.remove('active');
+    };
+
+    window.scrollToMessage = function(msgId) {
+      const msgEl = document.querySelector(`[data-msg-id="${msgId}"]`);
+      if (msgEl) {
+        msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        msgEl.style.animation = 'none';
+        msgEl.offsetHeight; // Trigger reflow
+        msgEl.style.animation = 'highlight-msg 1s ease-out';
+      }
     };
 
     window.addReaction = async function(msgId, emoji) {
@@ -1189,6 +1645,11 @@
       input.value = '';
       input.focus();
 
+      // Check for @Poppy mention - match @Poppy anywhere in text and capture everything after
+      const poppyMention = text.match(/@poppy\s*(.*)/i);
+      const aiQuestion = poppyMention && poppyMention[1]?.trim() ? poppyMention[1].trim() : null;
+      console.log('Poppy check:', { text, poppyMention, aiQuestion });
+
       try {
         let messagesRef;
         if (currentChat.type === 'channel') {
@@ -1198,13 +1659,30 @@
           messagesRef = collection(db, 'dms', dmId, 'messages');
         }
 
-        await addDoc(messagesRef, {
+        const messageData = {
           text: text,
           sender: currentUser.displayName || currentUser.email,
           senderId: currentUser.uid,
           photoURL: currentUser.photoURL || '',
           timestamp: serverTimestamp()
-        });
+        };
+
+        // Include reply data if replying
+        if (replyingTo) {
+          messageData.replyTo = {
+            msgId: replyingTo.msgId,
+            sender: replyingTo.sender,
+            text: replyingTo.text
+          };
+          cancelReply(); // Clear reply state
+        }
+
+        await addDoc(messagesRef, messageData);
+
+        // If mentioned @Poppy, trigger AI response
+        if (aiQuestion) {
+          askPoppy(aiQuestion);
+        }
       } catch (error) {
         console.error('Error sending message:', error);
         alert('Failed to send message. Please try again.');
@@ -1298,7 +1776,134 @@
     });
 
     document.getElementById('messageInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
+      if (e.key === 'Enter' && !mentionPickerActive) sendMessage();
+    });
+
+    // Mention picker
+    let mentionPickerActive = false;
+    let mentionSelectedIndex = 0;
+    let mentionOptions = [];
+    let mentionStartPos = -1;
+
+    function getMentionOptions(query) {
+      const options = [
+        { type: 'bot', name: 'Poppy', hint: 'AI Assistant', icon: '🤖' }
+      ];
+      // Add users
+      allUsers.forEach(u => {
+        options.push({ type: 'user', name: u.displayName, hint: u.email, photoURL: u.photoURL, uid: u.uid });
+      });
+      // Filter by query
+      return options.filter(o => o.name.toLowerCase().includes(query.toLowerCase()));
+    }
+
+    function showMentionPicker(query) {
+      mentionOptions = getMentionOptions(query);
+      mentionSelectedIndex = 0;
+      console.log('showMentionPicker called, options:', mentionOptions.length);
+
+      if (mentionOptions.length === 0) {
+        hideMentionPicker();
+        return;
+      }
+
+      mentionPickerActive = true;
+      const picker = document.getElementById('mentionPicker');
+      console.log('Picker element:', picker);
+      picker.innerHTML = `
+        <div class="mention-picker-title">Mention someone</div>
+        ${mentionOptions.map((opt, i) => `
+          <div class="mention-item ${i === mentionSelectedIndex ? 'selected' : ''}" onclick="selectMention(${i})">
+            ${opt.type === 'bot'
+              ? `<div class="mention-item-icon">${opt.icon}</div>`
+              : `<img src="${opt.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(opt.name)}" alt="${opt.name}">`}
+            <span class="mention-item-name">${escapeHtml(opt.name)}</span>
+            <span class="mention-item-hint">${escapeHtml(opt.hint)}</span>
+          </div>
+        `).join('')}
+      `;
+      picker.classList.add('active');
+    }
+
+    function hideMentionPicker() {
+      mentionPickerActive = false;
+      mentionStartPos = -1;
+      document.getElementById('mentionPicker').classList.remove('active');
+    }
+
+    function renderMentionPicker() {
+      const picker = document.getElementById('mentionPicker');
+      const items = picker.querySelectorAll('.mention-item');
+      items.forEach((item, i) => {
+        item.classList.toggle('selected', i === mentionSelectedIndex);
+      });
+    }
+
+    window.selectMention = function(index) {
+      const opt = mentionOptions[index];
+      const input = document.getElementById('messageInput');
+      const text = input.value;
+
+      // Replace @query with @Name
+      const beforeMention = text.substring(0, mentionStartPos);
+      const afterMention = text.substring(input.selectionStart);
+      input.value = beforeMention + '@' + opt.name + ' ' + afterMention;
+
+      hideMentionPicker();
+      input.focus();
+      // Set cursor position after the mention
+      const newPos = mentionStartPos + opt.name.length + 2;
+      input.setSelectionRange(newPos, newPos);
+    };
+
+    document.getElementById('messageInput').addEventListener('input', (e) => {
+      const input = e.target;
+      const text = input.value;
+      const cursorPos = input.selectionStart;
+
+      // Find @ before cursor (look backwards from cursor)
+      let atPos = -1;
+      for (let i = cursorPos - 1; i >= 0; i--) {
+        if (text[i] === '@') {
+          // Found @, but make sure it's at start or after a space
+          if (i === 0 || text[i - 1] === ' ') {
+            atPos = i;
+          }
+          break;
+        }
+        // Stop if we hit a space (we've gone past a potential mention)
+        if (text[i] === ' ') break;
+      }
+
+      console.log('Mention check:', { text, cursorPos, atPos });
+
+      if (atPos >= 0) {
+        const query = text.substring(atPos + 1, cursorPos);
+        console.log('Showing mention picker for query:', query);
+        mentionStartPos = atPos;
+        showMentionPicker(query);
+      } else {
+        hideMentionPicker();
+      }
+    });
+
+    document.getElementById('messageInput').addEventListener('keydown', (e) => {
+      if (!mentionPickerActive) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        mentionSelectedIndex = Math.min(mentionSelectedIndex + 1, mentionOptions.length - 1);
+        renderMentionPicker();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        mentionSelectedIndex = Math.max(mentionSelectedIndex - 1, 0);
+        renderMentionPicker();
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        selectMention(mentionSelectedIndex);
+      } else if (e.key === 'Escape') {
+        hideMentionPicker();
+      }
     });
 
     // Auth state change
