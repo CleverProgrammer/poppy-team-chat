@@ -307,71 +307,113 @@
     }
 
     /* Reactions */
-    .reaction-btn {
+    .quick-reactions {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.2s, transform 0.2s;
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      background: white;
+      border-radius: 20px;
+      padding: 4px 6px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
     }
 
-    .message-wrapper:hover .reaction-btn {
+    .message-wrapper:hover .quick-reactions {
       opacity: 1;
     }
 
-    .reaction-btn:hover {
-      transform: translateY(-50%) scale(1.1);
+    .message-wrapper.sent .quick-reactions {
+      left: -140px;
     }
 
-    .message-wrapper.sent .reaction-btn {
-      left: -36px;
+    .message-wrapper.received .quick-reactions {
+      right: -140px;
     }
 
-    .message-wrapper.received .reaction-btn {
-      right: -36px;
-    }
-
-    .reaction-picker {
-      position: absolute;
-      background: white;
-      border-radius: 20px;
-      padding: 6px 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      display: flex;
-      gap: 4px;
-      z-index: 100;
-      top: -40px;
-    }
-
-    .message-wrapper.sent .reaction-picker {
-      right: 0;
-    }
-
-    .message-wrapper.received .reaction-picker {
-      left: 0;
-    }
-
-    .reaction-picker span {
-      font-size: 20px;
+    .quick-reactions span {
+      font-size: 18px;
       cursor: pointer;
       padding: 4px;
       border-radius: 8px;
       transition: transform 0.15s, background 0.15s;
     }
 
-    .reaction-picker span:hover {
+    .quick-reactions span:hover {
       transform: scale(1.3);
+      background: #f0f0f0;
+    }
+
+    .more-reactions-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      transition: background 0.15s, transform 0.15s;
+      margin-left: 2px;
+    }
+
+    .more-reactions-btn:hover {
+      background: #e0e0e0;
+      transform: scale(1.1);
+    }
+
+    .emoji-panel {
+      position: absolute;
+      background: white;
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      z-index: 100;
+      top: -160px;
+      width: 280px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .message-wrapper.sent .emoji-panel {
+      right: 0;
+    }
+
+    .message-wrapper.received .emoji-panel {
+      left: 0;
+    }
+
+    .emoji-panel-title {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .emoji-grid span {
+      font-size: 22px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      text-align: center;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .emoji-grid span:hover {
+      transform: scale(1.2);
       background: #f0f0f0;
     }
 
@@ -991,14 +1033,51 @@
               <div class="text">${escapeHtml(msg.text)}</div>
               <div class="time">${time}</div>
             </div>
-            <button class="reaction-btn" onclick="toggleReactionPicker('${msgId}')">😊</button>
-            <div class="reaction-picker hidden" id="picker-${msgId}">
+            <div class="quick-reactions">
               <span onclick="addReaction('${msgId}', '👍')">👍</span>
               <span onclick="addReaction('${msgId}', '❤️')">❤️</span>
-              <span onclick="addReaction('${msgId}', '😂')">😂</span>
-              <span onclick="addReaction('${msgId}', '😮')">😮</span>
-              <span onclick="addReaction('${msgId}', '😢')">😢</span>
+              <span onclick="addReaction('${msgId}', '🤣')">🤣</span>
               <span onclick="addReaction('${msgId}', '🔥')">🔥</span>
+              <button class="more-reactions-btn" onclick="toggleEmojiPanel('${msgId}')">+</button>
+            </div>
+            <div class="emoji-panel hidden" id="emoji-panel-${msgId}">
+              <div class="emoji-panel-title">Reactions</div>
+              <div class="emoji-grid">
+                <span onclick="addReaction('${msgId}', '👍')">👍</span>
+                <span onclick="addReaction('${msgId}', '👎')">👎</span>
+                <span onclick="addReaction('${msgId}', '❤️')">❤️</span>
+                <span onclick="addReaction('${msgId}', '🧡')">🧡</span>
+                <span onclick="addReaction('${msgId}', '💛')">💛</span>
+                <span onclick="addReaction('${msgId}', '💚')">💚</span>
+                <span onclick="addReaction('${msgId}', '💙')">💙</span>
+                <span onclick="addReaction('${msgId}', '😂')">😂</span>
+                <span onclick="addReaction('${msgId}', '🤣')">🤣</span>
+                <span onclick="addReaction('${msgId}', '😊')">😊</span>
+                <span onclick="addReaction('${msgId}', '😍')">😍</span>
+                <span onclick="addReaction('${msgId}', '🥰')">🥰</span>
+                <span onclick="addReaction('${msgId}', '😘')">😘</span>
+                <span onclick="addReaction('${msgId}', '🤗')">🤗</span>
+                <span onclick="addReaction('${msgId}', '🤔')">🤔</span>
+                <span onclick="addReaction('${msgId}', '🤯')">🤯</span>
+                <span onclick="addReaction('${msgId}', '😱')">😱</span>
+                <span onclick="addReaction('${msgId}', '😮')">😮</span>
+                <span onclick="addReaction('${msgId}', '😢')">😢</span>
+                <span onclick="addReaction('${msgId}', '😭')">😭</span>
+                <span onclick="addReaction('${msgId}', '😤')">😤</span>
+                <span onclick="addReaction('${msgId}', '🔥')">🔥</span>
+                <span onclick="addReaction('${msgId}', '💯')">💯</span>
+                <span onclick="addReaction('${msgId}', '💪')">💪</span>
+                <span onclick="addReaction('${msgId}', '👏')">👏</span>
+                <span onclick="addReaction('${msgId}', '🙌')">🙌</span>
+                <span onclick="addReaction('${msgId}', '🎉')">🎉</span>
+                <span onclick="addReaction('${msgId}', '✨')">✨</span>
+                <span onclick="addReaction('${msgId}', '🍆')">🍆</span>
+                <span onclick="addReaction('${msgId}', '🍑')">🍑</span>
+                <span onclick="addReaction('${msgId}', '👀')">👀</span>
+                <span onclick="addReaction('${msgId}', '💀')">💀</span>
+                <span onclick="addReaction('${msgId}', '🤡')">🤡</span>
+                <span onclick="addReaction('${msgId}', '💩')">💩</span>
+              </div>
             </div>
             ${reactionsHtml}
           `;
@@ -1037,20 +1116,21 @@
       return `<div class="reactions-display">${badges}</div>`;
     }
 
-    window.toggleReactionPicker = function(msgId) {
-      // Close all other pickers
-      document.querySelectorAll('.reaction-picker').forEach(p => {
-        if (p.id !== `picker-${msgId}`) p.classList.add('hidden');
+    window.toggleEmojiPanel = function(msgId) {
+      // Close all other panels
+      document.querySelectorAll('.emoji-panel').forEach(p => {
+        if (p.id !== `emoji-panel-${msgId}`) p.classList.add('hidden');
       });
-      const picker = document.getElementById(`picker-${msgId}`);
-      picker.classList.toggle('hidden');
+      const panel = document.getElementById(`emoji-panel-${msgId}`);
+      panel.classList.toggle('hidden');
     };
 
     window.addReaction = async function(msgId, emoji) {
       if (!currentUser) return;
 
-      const picker = document.getElementById(`picker-${msgId}`);
-      if (picker) picker.classList.add('hidden');
+      // Close emoji panel if open
+      const panel = document.getElementById(`emoji-panel-${msgId}`);
+      if (panel) panel.classList.add('hidden');
 
       try {
         const msgRef = doc(db, currentMessagesPath, msgId);
@@ -1070,10 +1150,10 @@
       }
     };
 
-    // Close reaction picker when clicking outside
+    // Close emoji panel when clicking outside
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.reaction-btn') && !e.target.closest('.reaction-picker')) {
-        document.querySelectorAll('.reaction-picker').forEach(p => p.classList.add('hidden'));
+      if (!e.target.closest('.more-reactions-btn') && !e.target.closest('.emoji-panel')) {
+        document.querySelectorAll('.emoji-panel').forEach(p => p.classList.add('hidden'));
       }
     });
 
