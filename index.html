@@ -746,6 +746,29 @@
     let isPageVisible = true;
     let lastMessageTimestamps = {};
 
+    // Track most used reactions (stored in localStorage)
+    const DEFAULT_REACTIONS = ['👍', '❤️', '🤣', '🔥'];
+    let reactionCounts = JSON.parse(localStorage.getItem('reactionCounts') || '{}');
+
+    function getTopReactions(count = 4) {
+      const sorted = Object.entries(reactionCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([emoji]) => emoji);
+
+      // Fill with defaults if not enough
+      const result = [...sorted];
+      for (const emoji of DEFAULT_REACTIONS) {
+        if (result.length >= count) break;
+        if (!result.includes(emoji)) result.push(emoji);
+      }
+      return result.slice(0, count);
+    }
+
+    function trackReaction(emoji) {
+      reactionCounts[emoji] = (reactionCounts[emoji] || 0) + 1;
+      localStorage.setItem('reactionCounts', JSON.stringify(reactionCounts));
+    }
+
     // Notification sound (base64 encoded short beep)
     const notificationSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2JkI2Coverage3+DiIqGg4aOkYyGfHN1hI6VkYZlVVBcbIGQlIZ2aGZsd4GJiIN7dn+KkI2Ed25yfouPiXttZGp3h5KTi3hlXWFxg5CThHZnY2lzgImLhnt0c3uEioqFfnl6gYiKh4F8en+EiYqHgn17foOHiYeFgX5+gYWHh4WCgIGDhYaFhIKBgoOEhYSEgoKCg4SEhIOCgoKDhISEg4OCgoODhIODg4KCgoODg4ODgoKCgoODg4OCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKC')
 
@@ -1027,6 +1050,7 @@
 
           const reactionsHtml = renderReactions(msg.reactions || {}, msgId);
 
+          const topReactions = getTopReactions(4);
           wrapperEl.innerHTML = `
             <div class="message">
               ${!isSent ? `<div class="sender">${escapeHtml(msg.sender)}</div>` : ''}
@@ -1034,10 +1058,7 @@
               <div class="time">${time}</div>
             </div>
             <div class="quick-reactions">
-              <span onclick="addReaction('${msgId}', '👍')">👍</span>
-              <span onclick="addReaction('${msgId}', '❤️')">❤️</span>
-              <span onclick="addReaction('${msgId}', '🤣')">🤣</span>
-              <span onclick="addReaction('${msgId}', '🔥')">🔥</span>
+              ${topReactions.map(emoji => `<span onclick="addReaction('${msgId}', '${emoji}')">${emoji}</span>`).join('')}
               <button class="more-reactions-btn" onclick="toggleEmojiPanel('${msgId}')">+</button>
             </div>
             <div class="emoji-panel hidden" id="emoji-panel-${msgId}">
@@ -1142,6 +1163,8 @@
           delete reactions[currentUser.uid];
         } else {
           reactions[currentUser.uid] = emoji;
+          // Track this reaction for most-used sorting
+          trackReaction(emoji);
         }
 
         await updateDoc(msgRef, { reactions });
