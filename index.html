@@ -88,8 +88,22 @@
       background: rgba(102, 126, 234, 0.3);
     }
 
-    .channel-item span {
+    .channel-item span.hash {
       color: #888;
+    }
+
+    .unread-dot {
+      width: 8px;
+      height: 8px;
+      background: #667eea;
+      border-radius: 50%;
+      margin-left: auto;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
     }
 
     .dm-item img {
@@ -605,7 +619,8 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Channels</div>
         <div class="channel-item active" onclick="switchToChannel('general')" id="channel-general">
-          <span>#</span> general
+          <span class="hash">#</span> general
+          <span class="unread-dot hidden" id="unread-general"></span>
         </div>
       </div>
 
@@ -685,6 +700,108 @@
     let currentChat = { type: 'channel', id: 'general' };
     let unsubscribeMessages = null;
     let activeDMs = new Set(JSON.parse(localStorage.getItem('activeDMs') || '[]'));
+    let unreadChats = new Set();
+    let isPageVisible = true;
+    let lastMessageTimestamps = {};
+
+    // Notification sound (base64 encoded short beep)
+    const notificationSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2JkI2Coverage3+DiIqGg4aOkYyGfHN1hI6VkYZlVVBcbIGQlIZ2aGZsd4GJiIN7dn+KkI2Ed25yfouPiXttZGp3h5KTi3hlXWFxg5CThHZnY2lzgImLhnt0c3uEioqFfnl6gYiKh4F8en+EiYqHgn17foOHiYeFgX5+gYWHh4WCgIGDhYaFhIKBgoOEhYSEgoKCg4SEhIOCgoKDhISEg4OCgoODhIODg4KCgoODg4ODgoKCgoODg4OCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKC')
+
+    // Track page visibility
+    document.addEventListener('visibilitychange', () => {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) {
+        // Clear unread for current chat when page becomes visible
+        markCurrentChatAsRead();
+      }
+    });
+
+    function playNotificationSound() {
+      notificationSound.currentTime = 0;
+      notificationSound.play().catch(() => {}); // Ignore autoplay errors
+    }
+
+    function markCurrentChatAsRead() {
+      const chatKey = currentChat.type === 'channel' ? `channel-${currentChat.id}` : `dm-${currentChat.id}`;
+      unreadChats.delete(chatKey);
+      updateUnreadIndicators();
+    }
+
+    function updateUnreadIndicators() {
+      // Update general channel indicator
+      const generalDot = document.getElementById('unread-general');
+      if (generalDot) {
+        if (unreadChats.has('channel-general') && !(currentChat.type === 'channel' && currentChat.id === 'general')) {
+          generalDot.classList.remove('hidden');
+        } else {
+          generalDot.classList.add('hidden');
+        }
+      }
+
+      // Update DM indicators
+      renderDMList();
+
+      // Update page title with unread count
+      const unreadCount = unreadChats.size;
+      document.title = unreadCount > 0 ? `(${unreadCount}) Poppy Chat` : 'Poppy Chat';
+    }
+
+    // Listen for messages in other chats (for unread indicators)
+    let otherChatListeners = [];
+
+    function setupUnreadListeners() {
+      // Clear existing listeners
+      otherChatListeners.forEach(unsub => unsub());
+      otherChatListeners = [];
+
+      if (!currentUser) return;
+
+      // Listen to general channel
+      const generalRef = collection(db, 'channels', 'general', 'messages');
+      const generalQuery = query(generalRef, orderBy('timestamp', 'desc'));
+      const unsubGeneral = onSnapshot(generalQuery, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            const msg = change.doc.data();
+            const isCurrentChat = currentChat.type === 'channel' && currentChat.id === 'general';
+            if (msg.senderId !== currentUser.uid && !isCurrentChat && msg.timestamp) {
+              unreadChats.add('channel-general');
+              updateUnreadIndicators();
+              if (!isPageVisible) {
+                playNotificationSound();
+              }
+            }
+          }
+        });
+      });
+      otherChatListeners.push(unsubGeneral);
+
+      // Listen to DM conversations
+      activeDMs.forEach(odMUserId => {
+        const dmId = getDMId(currentUser.uid, odMUserId);
+        const dmRef = collection(db, 'dms', dmId, 'messages');
+        const dmQuery = query(dmRef, orderBy('timestamp', 'desc'));
+        const unsubDM = onSnapshot(dmQuery, (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+              const msg = change.doc.data();
+              const isCurrentChat = currentChat.type === 'dm' && currentChat.id === odMUserId;
+              if (msg.senderId !== currentUser.uid && !isCurrentChat && msg.timestamp) {
+                unreadChats.add(`dm-${odMUserId}`);
+                // Also add to active DMs if not there
+                activeDMs.add(odMUserId);
+                localStorage.setItem('activeDMs', JSON.stringify([...activeDMs]));
+                updateUnreadIndicators();
+                if (!isPageVisible) {
+                  playNotificationSound();
+                }
+              }
+            }
+          });
+        });
+        otherChatListeners.push(unsubDM);
+      });
+    }
 
     // Auth functions
     window.signInWithGoogle = async function() {
@@ -744,9 +861,11 @@
           const div = document.createElement('div');
           div.className = `dm-item ${currentChat.type === 'dm' && currentChat.id === user.uid ? 'active' : ''}`;
           div.onclick = () => switchToDM(user);
+          const hasUnread = unreadChats.has(`dm-${user.uid}`) && !(currentChat.type === 'dm' && currentChat.id === user.uid);
           div.innerHTML = `
             <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName)}" alt="${user.displayName}">
             <span>${user.displayName}</span>
+            ${hasUnread ? '<span class="unread-dot"></span>' : ''}
           `;
           dmList.appendChild(div);
         }
@@ -763,6 +882,10 @@
       document.querySelectorAll('.channel-item, .dm-item').forEach(el => el.classList.remove('active'));
       document.getElementById('channel-' + channelId)?.classList.add('active');
 
+      // Mark as read
+      unreadChats.delete(`channel-${channelId}`);
+      updateUnreadIndicators();
+
       loadMessages();
     };
 
@@ -776,6 +899,9 @@
       // Add to active DMs
       activeDMs.add(user.uid);
       localStorage.setItem('activeDMs', JSON.stringify([...activeDMs]));
+
+      // Mark as read
+      unreadChats.delete(`dm-${user.uid}`);
 
       document.querySelectorAll('.channel-item, .dm-item').forEach(el => el.classList.remove('active'));
       renderDMList();
@@ -808,6 +934,33 @@
       const q = query(messagesRef, orderBy('timestamp', 'asc'));
       unsubscribeMessages = onSnapshot(q, (snapshot) => {
         const messagesDiv = document.getElementById('messages');
+
+        // Check for new messages (for notifications)
+        const chatKey = currentChat.type === 'channel' ? `channel-${currentChat.id}` : `dm-${currentChat.id}`;
+        let hasNewMessage = false;
+
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            const msg = change.doc.data();
+            // Only notify for messages from others, not our own
+            if (msg.senderId && msg.senderId !== currentUser?.uid && msg.timestamp) {
+              hasNewMessage = true;
+            }
+          }
+        });
+
+        // Play sound if page not visible or not viewing this chat, and there's a new message
+        if (hasNewMessage && lastMessageTimestamps[chatKey]) {
+          if (!isPageVisible) {
+            playNotificationSound();
+          }
+        }
+
+        // Track latest timestamp
+        if (!snapshot.empty) {
+          const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+          lastMessageTimestamps[chatKey] = lastDoc.data().timestamp;
+        }
 
         if (snapshot.empty) {
           messagesDiv.innerHTML = `
@@ -1062,6 +1215,12 @@
         document.getElementById('sidebarUserName').textContent = user.displayName || user.email;
 
         loadMessages();
+
+        // Setup listeners for unread indicators after a short delay
+        // to avoid triggering on initial load
+        setTimeout(() => {
+          setupUnreadListeners();
+        }, 2000);
       } else {
         document.getElementById('loginSection').classList.remove('hidden');
         document.getElementById('sidebar').classList.add('hidden');
