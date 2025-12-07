@@ -1229,7 +1229,7 @@
       </div>
       <div class="input-section hidden" id="inputSection">
         <div class="mention-picker" id="mentionPicker"></div>
-        <textarea id="messageInput" placeholder="Type a message... (@ to mention, Shift+Enter for new line)" rows="1"></textarea>
+        <textarea id="messageInput" placeholder="Type a message... (@ to mention, Shift+Enter for new line)" rows="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true"></textarea>
         <button id="sendBtn" onclick="sendMessage()">➤</button>
       </div>
     </div>
@@ -1942,6 +1942,9 @@ Examples:
       updateUnreadIndicators();
 
       loadMessages();
+
+      // Focus the message input
+      setTimeout(() => document.getElementById('messageInput')?.focus(), 100);
     };
 
     // Switch to DM
@@ -1963,6 +1966,9 @@ Examples:
 
       loadMessages();
       closeCmdPalette();
+
+      // Focus the message input
+      setTimeout(() => document.getElementById('messageInput')?.focus(), 100);
     };
 
     // Get DM conversation ID (sorted to be consistent)
@@ -2400,6 +2406,21 @@ Examples:
 
       if (e.key === 'Escape') {
         closeCmdPalette();
+      }
+
+      // If user starts typing and nothing is focused, focus the message input
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      const messageInput = document.getElementById('messageInput');
+      const inputSection = document.getElementById('inputSection');
+
+      // Check if input section is visible and user typed a printable character
+      if (!isInputFocused && messageInput && inputSection && !inputSection.classList.contains('hidden')) {
+        // Only for printable characters (not modifier keys, arrows, etc.)
+        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          messageInput.focus();
+          // The character will be typed naturally since we focused
+        }
       }
     });
 
