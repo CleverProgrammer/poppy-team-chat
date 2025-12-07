@@ -2304,35 +2304,40 @@
     const RAGIE_API_KEY = 'tnt_CJV6pN13cI9_dm65sEDNvYvkHKtwheXepZg6tjUjGNrAWRZTG3LZTKk';
 
     async function searchRagie(query) {
+      console.log('🔍 Ragie: Starting search for:', query);
       try {
-        console.log('🔍 Ragie: Searching for:', query);
+        const requestBody = {
+          query: query,
+          top_k: 10,
+          rerank: true
+        };
+        console.log('🔍 Ragie: Request body:', JSON.stringify(requestBody));
+
         const response = await fetch('https://api.ragie.ai/retrievals', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${RAGIE_API_KEY}`
           },
-          body: JSON.stringify({
-            query: query,
-            top_k: 10,
-            rerank: true
-          })
+          body: JSON.stringify(requestBody)
         });
+
+        console.log('🔍 Ragie: Response status:', response.status);
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('🔍 Ragie: Error', response.status, errorText);
+          console.error('🔍 Ragie: Error response:', response.status, errorText);
           return null;
         }
 
         const data = await response.json();
-        console.log('🔍 Ragie: Full response:', JSON.stringify(data, null, 2));
+        console.log('🔍 Ragie: SUCCESS! Got response with', data.scored_chunks?.length || 0, 'chunks');
 
         // Handle different response formats
         const chunks = data.scored_chunks || data.chunks || data.results || [];
-        console.log('🔍 Ragie: Got', chunks.length, 'chunks');
 
         if (chunks.length === 0) {
+          console.log('🔍 Ragie: No chunks found');
           return null;
         }
 
@@ -2341,14 +2346,14 @@
           // Use document_name first (that's what Ragie returns), then fall back to metadata
           const source = chunk.document_name || chunk.document_metadata?.source_url || 'Notion';
           const text = chunk.text || chunk.content || '';
-          console.log('🔍 Ragie chunk:', { source, textLength: text.length });
+          console.log(`🔍 Ragie chunk ${i + 1}:`, source, '- length:', text.length);
           return `[Source: ${source}]\n${text}`;
         }).join('\n\n---\n\n');
 
-        console.log('🔍 Ragie: Final context length:', ragContext.length);
+        console.log('🔍 Ragie: Total context length:', ragContext.length, 'chars');
         return ragContext;
       } catch (error) {
-        console.error('🔍 Ragie: Error:', error);
+        console.error('🔍 Ragie: FETCH ERROR:', error.message, error);
         return null;
       }
     }
