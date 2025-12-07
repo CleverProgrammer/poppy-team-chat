@@ -389,22 +389,16 @@
     }
 
     .message .time {
-      position: absolute;
       font-size: 10px;
       color: var(--text-tertiary);
       opacity: 0;
       transition: opacity 0.2s;
-      white-space: nowrap;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    .message-wrapper.sent .time {
-      right: calc(100% + 8px);
+      margin-top: 4px;
+      text-align: right;
     }
 
     .message-wrapper.received .time {
-      left: calc(100% + 8px);
+      text-align: left;
     }
 
     .message-wrapper:hover .time {
