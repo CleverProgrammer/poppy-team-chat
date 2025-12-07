@@ -2300,6 +2300,50 @@
       return messages.map(m => `[${m.time}] ${m.sender}: ${m.text}`).join('\n');
     }
 
+    // Ragie RAG Integration
+    const RAGIE_API_KEY = 'tnt_CJV6pN13cI9_dm65sEDNvYvkHKtwheXepZg6tjUjGNrAWRZTG3LZTKk';
+
+    async function searchRagie(query) {
+      try {
+        console.log('🔍 Ragie: Searching for:', query);
+        const response = await fetch('https://api.ragie.ai/retrievals', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RAGIE_API_KEY}`
+          },
+          body: JSON.stringify({
+            query: query,
+            top_k: 8,
+            rerank: true
+          })
+        });
+
+        if (!response.ok) {
+          console.error('🔍 Ragie: Error', response.status);
+          return null;
+        }
+
+        const data = await response.json();
+        console.log('🔍 Ragie: Got', data.scored_chunks?.length || 0, 'chunks');
+
+        if (!data.scored_chunks || data.scored_chunks.length === 0) {
+          return null;
+        }
+
+        // Format the chunks into context
+        const ragContext = data.scored_chunks.map((chunk, i) => {
+          const source = chunk.document_metadata?.title || chunk.document_metadata?.filename || 'Notion';
+          return `[Source: ${source}]\n${chunk.text}`;
+        }).join('\n\n---\n\n');
+
+        return ragContext;
+      } catch (error) {
+        console.error('🔍 Ragie: Error:', error);
+        return null;
+      }
+    }
+
     async function askPoppy(userQuestion) {
       if (isAIProcessing) return;
 
@@ -2336,6 +2380,11 @@
         const docsContext = await getAllDocsContent();
         console.log('🤖 Poppy AI: Got docs context');
 
+        // Search Ragie for relevant knowledge from Notion
+        console.log('🤖 Poppy AI: Searching Ragie knowledge base...');
+        const ragieContext = await searchRagie(userQuestion);
+        console.log('🤖 Poppy AI: Ragie context:', ragieContext ? 'found' : 'none');
+
         const systemPrompt = `You are Poppy, a friendly AI assistant in Poppy Chat.
 
 tldr bro. respond like SUPER fucking short unless I explicitly ask you to expand. Also keep shit very simple and easy to understand!
@@ -2363,6 +2412,11 @@ ${context}
 ${docsContext ? `You have access to the team's documents. Use this knowledge to answer questions:
 ---
 ${docsContext}
+---
+
+` : ''}${ragieContext ? `You also have access to the team's Notion knowledge base. Use this to answer questions:
+---
+${ragieContext}
 ---
 
 ` : ''}Be helpful, witty, and brief. Use line breaks between thoughts for easy reading.`;
