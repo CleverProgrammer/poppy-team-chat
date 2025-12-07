@@ -2690,11 +2690,8 @@ Examples:
           messagesDiv.appendChild(wrapperEl);
         });
 
-        // Only scroll to bottom on initial load, not on every update
-        if (isInitialLoad) {
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          isInitialLoad = false;
-        }
+        // Always scroll to bottom when new messages arrive
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
     }
 
