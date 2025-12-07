@@ -1607,7 +1607,7 @@ Markdown supported:
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, query, orderBy, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, updateDoc, query, orderBy, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -1801,6 +1801,30 @@ Markdown supported:
       });
     }
 
+    // Get all docs content for AI context
+    async function getAllDocsContent() {
+      try {
+        const docsRef = collection(db, 'docs');
+        const docsQuery = query(docsRef, orderBy('updatedAt', 'desc'));
+        const snapshot = await getDocs(docsQuery);
+
+        if (snapshot.empty) return '';
+
+        let docsContent = '';
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          docsContent += `📄 DOCUMENT: ${data.title || 'Untitled'}\n`;
+          docsContent += `${data.content || '(empty)'}\n`;
+          docsContent += `---\n\n`;
+        });
+
+        return docsContent;
+      } catch (error) {
+        console.error('Error fetching docs for AI:', error);
+        return '';
+      }
+    }
+
     // Claude API config - stored in Firebase so only one person needs to set it
     let CLAUDE_API_KEY = '';
 
@@ -1926,6 +1950,10 @@ Markdown supported:
         console.log('🤖 Poppy AI: Got', chatHistory.length, 'messages');
         const context = buildChatContext(chatHistory);
 
+        // Fetch all docs for AI knowledge
+        const docsContext = await getAllDocsContent();
+        console.log('🤖 Poppy AI: Got docs context');
+
         const systemPrompt = `You are Poppy, a friendly AI assistant in Poppy Chat.
 
 IMPORTANT FORMATTING RULES:
@@ -1948,7 +1976,12 @@ You know the team from this chat history:
 ${context}
 ---
 
-Be helpful, witty, and brief. Use line breaks between thoughts for easy reading.`;
+${docsContext ? `You have access to the team's documents. Use this knowledge to answer questions:
+---
+${docsContext}
+---
+
+` : ''}Be helpful, witty, and brief. Use line breaks between thoughts for easy reading.`;
 
         console.log('🤖 Poppy AI: Calling Claude API with extended thinking...');
         const response = await fetch('https://api.anthropic.com/v1/messages', {
