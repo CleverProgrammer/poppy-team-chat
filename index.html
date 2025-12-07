@@ -76,6 +76,15 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* Hide scrollbars but allow scrolling */
+    * {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+    *::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, var(--bg-body-start) 0%, var(--bg-body-end) 100%);
@@ -1146,6 +1155,281 @@
       font-size: 11px;
     }
 
+    /* Docs Modal */
+    .docs-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .docs-modal {
+      width: 100%;
+      max-width: 800px;
+      height: 80vh;
+      background: var(--bg-app);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .docs-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .docs-header-icon {
+      font-size: 24px;
+    }
+
+    .docs-title-input {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .docs-title-input::placeholder {
+      color: var(--text-placeholder);
+    }
+
+    .docs-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .docs-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .docs-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .docs-btn.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .docs-btn.secondary {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .docs-btn.danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .docs-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .docs-editor {
+      flex: 1;
+      padding: 20px;
+      border: none;
+      background: var(--bg-messages);
+      color: var(--text-primary);
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+    }
+
+    .docs-editor::placeholder {
+      color: var(--text-placeholder);
+    }
+
+    .docs-preview {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: var(--bg-app);
+      border-left: 1px solid var(--border-light);
+    }
+
+    .docs-preview.hidden {
+      display: none;
+    }
+
+    .docs-editor.full-width {
+      border-right: none;
+    }
+
+    /* Markdown styles */
+    .docs-preview h1 {
+      font-size: 2em;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--border-light);
+      padding-bottom: 8px;
+    }
+
+    .docs-preview h2 {
+      font-size: 1.5em;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: var(--text-primary);
+    }
+
+    .docs-preview h3 {
+      font-size: 1.25em;
+      font-weight: 600;
+      margin: 20px 0 10px;
+      color: var(--text-primary);
+    }
+
+    .docs-preview p {
+      margin-bottom: 12px;
+      line-height: 1.7;
+      color: var(--text-primary);
+    }
+
+    .docs-preview ul, .docs-preview ol {
+      margin: 12px 0;
+      padding-left: 24px;
+      color: var(--text-primary);
+    }
+
+    .docs-preview li {
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    .docs-preview code {
+      background: var(--bg-hover);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+
+    .docs-preview pre {
+      background: var(--bg-sidebar);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    .docs-preview pre code {
+      background: none;
+      padding: 0;
+      color: #e0e0e0;
+    }
+
+    .docs-preview blockquote {
+      border-left: 4px solid #667eea;
+      padding-left: 16px;
+      margin: 16px 0;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    .docs-preview a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .docs-preview a:hover {
+      text-decoration: underline;
+    }
+
+    .docs-preview strong {
+      font-weight: 600;
+    }
+
+    .docs-preview em {
+      font-style: italic;
+    }
+
+    .docs-preview hr {
+      border: none;
+      border-top: 1px solid var(--border-light);
+      margin: 24px 0;
+    }
+
+    .docs-toggle-preview {
+      padding: 8px 12px;
+      background: var(--bg-hover);
+      border: none;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .docs-toggle-preview:hover {
+      background: var(--border-input);
+    }
+
+    .docs-toggle-preview.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    /* Docs list in sidebar */
+    .docs-list {
+      padding: 0 10px;
+    }
+
+    .doc-item {
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #aaa;
+      transition: background 0.15s;
+      font-size: 14px;
+    }
+
+    .doc-item:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .doc-item-icon {
+      font-size: 14px;
+    }
+
+    .doc-item-title {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
@@ -1160,10 +1444,54 @@
       body {
         padding: 0;
       }
+      .docs-modal {
+        height: 100vh;
+        max-width: 100%;
+        border-radius: 0;
+      }
+      .docs-preview {
+        display: none !important;
+      }
+      .docs-editor {
+        width: 100% !important;
+      }
     }
   </style>
+  <!-- Marked.js for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+  <!-- Docs Modal -->
+  <div class="docs-overlay hidden" id="docsOverlay" onclick="closeDocsModal()">
+    <div class="docs-modal" onclick="event.stopPropagation()">
+      <div class="docs-header">
+        <span class="docs-header-icon">📄</span>
+        <input type="text" class="docs-title-input" id="docsTitle" placeholder="Untitled Document">
+        <button class="docs-toggle-preview active" id="docsTogglePreview" onclick="toggleDocsPreview()">
+          <span>👁</span> Preview
+        </button>
+        <div class="docs-actions">
+          <button class="docs-btn secondary" onclick="closeDocsModal()">Cancel</button>
+          <button class="docs-btn primary" onclick="saveDoc()">Save</button>
+        </div>
+      </div>
+      <div class="docs-body">
+        <textarea class="docs-editor" id="docsEditor" placeholder="Write your document here...
+
+Markdown supported:
+# Heading 1
+## Heading 2
+**bold** and *italic*
+- bullet points
+1. numbered lists
+`code` and ```code blocks```
+> quotes
+[links](url)"></textarea>
+        <div class="docs-preview" id="docsPreview"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Inline AI Modal -->
   <div class="ai-inline-overlay hidden" id="aiInlineOverlay" onclick="closeAiInlineModal()"></div>
   <div class="ai-inline-modal hidden" id="aiInlineModal">
@@ -1216,6 +1544,11 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Direct Messages</div>
         <div id="dmList"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Docs</div>
+        <div class="docs-list" id="docsList"></div>
       </div>
 
       <div class="user-panel" id="userPanel">
@@ -1334,6 +1667,139 @@
 
     // Initialize theme on page load
     initTheme();
+
+    // Docs functionality
+    let currentDocId = null;
+    let docsPreviewVisible = true;
+
+    window.openDocsModal = function(docId = null) {
+      currentDocId = docId;
+      document.getElementById('docsOverlay').classList.remove('hidden');
+      document.getElementById('docsTitle').value = '';
+      document.getElementById('docsEditor').value = '';
+      document.getElementById('docsPreview').innerHTML = '';
+
+      if (docId) {
+        // Load existing doc
+        loadDoc(docId);
+      } else {
+        document.getElementById('docsTitle').focus();
+      }
+
+      // Set up live preview
+      const editor = document.getElementById('docsEditor');
+      editor.addEventListener('input', updateDocsPreview);
+    };
+
+    window.closeDocsModal = function() {
+      document.getElementById('docsOverlay').classList.add('hidden');
+      currentDocId = null;
+    };
+
+    window.toggleDocsPreview = function() {
+      docsPreviewVisible = !docsPreviewVisible;
+      const preview = document.getElementById('docsPreview');
+      const editor = document.getElementById('docsEditor');
+      const btn = document.getElementById('docsTogglePreview');
+
+      if (docsPreviewVisible) {
+        preview.classList.remove('hidden');
+        editor.classList.remove('full-width');
+        btn.classList.add('active');
+        updateDocsPreview();
+      } else {
+        preview.classList.add('hidden');
+        editor.classList.add('full-width');
+        btn.classList.remove('active');
+      }
+    };
+
+    function updateDocsPreview() {
+      const content = document.getElementById('docsEditor').value;
+      const preview = document.getElementById('docsPreview');
+
+      if (typeof marked !== 'undefined' && docsPreviewVisible) {
+        preview.innerHTML = marked.parse(content);
+      }
+    }
+
+    async function loadDoc(docId) {
+      try {
+        const docRef = doc(db, 'docs', docId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          document.getElementById('docsTitle').value = data.title || '';
+          document.getElementById('docsEditor').value = data.content || '';
+          updateDocsPreview();
+        }
+      } catch (error) {
+        console.error('Error loading doc:', error);
+      }
+    }
+
+    window.saveDoc = async function() {
+      if (!currentUser) {
+        alert('Please sign in to save documents');
+        return;
+      }
+
+      const title = document.getElementById('docsTitle').value.trim() || 'Untitled Document';
+      const content = document.getElementById('docsEditor').value;
+
+      try {
+        if (currentDocId) {
+          // Update existing doc
+          await setDoc(doc(db, 'docs', currentDocId), {
+            title,
+            content,
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser.uid
+          }, { merge: true });
+        } else {
+          // Create new doc
+          const newDocRef = doc(collection(db, 'docs'));
+          await setDoc(newDocRef, {
+            title,
+            content,
+            createdAt: serverTimestamp(),
+            createdBy: currentUser.uid,
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser.uid
+          });
+          currentDocId = newDocRef.id;
+        }
+
+        closeDocsModal();
+      } catch (error) {
+        console.error('Error saving doc:', error);
+        alert('Failed to save document. Please try again.');
+      }
+    };
+
+    function loadDocs() {
+      if (!currentUser) return;
+
+      const docsRef = collection(db, 'docs');
+      const docsQuery = query(docsRef, orderBy('updatedAt', 'desc'));
+
+      onSnapshot(docsQuery, (snapshot) => {
+        const docsList = document.getElementById('docsList');
+        docsList.innerHTML = '';
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const div = document.createElement('div');
+          div.className = 'doc-item';
+          div.onclick = () => openDocsModal(docSnap.id);
+          div.innerHTML = `
+            <span class="doc-item-icon">📄</span>
+            <span class="doc-item-title">${escapeHtml(data.title || 'Untitled')}</span>
+          `;
+          docsList.appendChild(div);
+        });
+      });
+    }
 
     // Claude API config - stored in Firebase so only one person needs to set it
     let CLAUDE_API_KEY = '';
@@ -2390,6 +2856,10 @@ Examples:
 
         await addDoc(messagesRef, messageData);
 
+        // Scroll to bottom after sending
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
         // Trigger AI response if needed
         if (triggerAI) {
           askPoppy(aiQuestion || text);
@@ -2427,6 +2897,11 @@ Examples:
       const results = document.getElementById('cmdResults');
 
       filteredItems = [];
+
+      // Check for "doc" or "new doc" action
+      if ('doc'.includes(query) || 'new doc'.includes(query) || 'create doc'.includes(query)) {
+        filteredItems.push({ type: 'action', action: 'new-doc', name: 'New Document', hint: 'Create a new document', icon: '📄' });
+      }
 
       // Filter channels
       const matchingChannels = CHANNELS.filter(c =>
@@ -2466,12 +2941,31 @@ Examples:
       const results = document.getElementById('cmdResults');
 
       // Group items by type
+      const actions = filteredItems.filter(i => i.type === 'action');
       const channels = filteredItems.filter(i => i.type === 'channel');
       const dms = filteredItems.filter(i => i.type === 'dm');
       const users = filteredItems.filter(i => i.type === 'user');
 
       let html = '';
       let globalIndex = 0;
+
+      if (actions.length > 0) {
+        html += `<div class="cmd-palette-section">
+          <div class="cmd-palette-section-title">Actions</div>
+          ${actions.map(item => {
+            const idx = globalIndex++;
+            return `
+              <div class="cmd-palette-item ${idx === selectedIndex ? 'selected' : ''}" onclick="selectCmdItem(${idx})">
+                <div class="cmd-palette-item-icon">${item.icon}</div>
+                <div class="cmd-palette-item-info">
+                  <div class="cmd-palette-item-name">${escapeHtml(item.name)}</div>
+                  <div class="cmd-palette-item-hint">${escapeHtml(item.hint)}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>`;
+      }
 
       if (channels.length > 0) {
         html += `<div class="cmd-palette-section">
@@ -2534,7 +3028,12 @@ Examples:
       const item = filteredItems[index];
       if (!item) return;
 
-      if (item.type === 'channel') {
+      if (item.type === 'action') {
+        if (item.action === 'new-doc') {
+          closeCmdPalette();
+          openDocsModal();
+        }
+      } else if (item.type === 'channel') {
         switchToChannel(item.id);
         closeCmdPalette();
       } else if (item.type === 'dm' || item.type === 'user') {
@@ -2799,6 +3298,9 @@ Examples:
         setTimeout(() => {
           setupUnreadListeners();
         }, 2000);
+
+        // Load docs
+        loadDocs();
       } else {
         document.getElementById('loginSection').classList.remove('hidden');
         document.getElementById('sidebar').classList.add('hidden');
