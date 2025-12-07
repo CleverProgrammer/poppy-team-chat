@@ -2313,8 +2313,8 @@
         };
         console.log('🔍 Ragie: Request body:', JSON.stringify(requestBody));
 
-        // Use CORS proxy since Ragie API doesn't allow browser requests
-        const response = await fetch('https://corsproxy.io/?https://api.ragie.ai/retrievals', {
+        // Use Cloudflare Worker proxy since Ragie API doesn't allow browser requests
+        const response = await fetch('https://dark-paper-7f6a.cleverprogrammer.workers.dev/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
