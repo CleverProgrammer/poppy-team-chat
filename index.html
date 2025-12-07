@@ -2338,12 +2338,14 @@
 
         // Format the chunks into context
         const ragContext = chunks.map((chunk, i) => {
-          const metadata = chunk.document_metadata || chunk.metadata || {};
-          const source = metadata.title || metadata.filename || metadata.name || 'Notion';
-          const text = chunk.text || chunk.content || chunk.page_content || '';
+          // Use document_name first (that's what Ragie returns), then fall back to metadata
+          const source = chunk.document_name || chunk.document_metadata?.source_url || 'Notion';
+          const text = chunk.text || chunk.content || '';
+          console.log('🔍 Ragie chunk:', { source, textLength: text.length });
           return `[Source: ${source}]\n${text}`;
         }).join('\n\n---\n\n');
 
+        console.log('🔍 Ragie: Final context length:', ragContext.length);
         return ragContext;
       } catch (error) {
         console.error('🔍 Ragie: Error:', error);
