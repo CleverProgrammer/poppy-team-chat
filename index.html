@@ -1840,11 +1840,13 @@ Examples:
 
     // Listen for messages in other chats (for unread indicators)
     let otherChatListeners = [];
+    let listeningToDMs = new Set(); // Track which DM conversations we're listening to
 
     function setupUnreadListeners() {
       // Clear existing listeners
       otherChatListeners.forEach(unsub => unsub());
       otherChatListeners = [];
+      listeningToDMs.clear();
 
       if (!currentUser) return;
 
@@ -1868,31 +1870,63 @@ Examples:
       });
       otherChatListeners.push(unsubGeneral);
 
-      // Listen to DM conversations
-      activeDMs.forEach(odMUserId => {
-        const dmId = getDMId(currentUser.uid, odMUserId);
-        const dmRef = collection(db, 'dms', dmId, 'messages');
-        const dmQuery = query(dmRef, orderBy('timestamp', 'desc'));
-        const unsubDM = onSnapshot(dmQuery, (snapshot) => {
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-              const msg = change.doc.data();
-              const isCurrentChat = currentChat.type === 'dm' && currentChat.id === odMUserId;
-              if (msg.senderId !== currentUser.uid && !isCurrentChat && msg.timestamp) {
-                unreadChats.add(`dm-${odMUserId}`);
-                // Also add to active DMs if not there
-                activeDMs.add(odMUserId);
+      // Listen to the dms collection for any new DM conversations
+      const dmsRef = collection(db, 'dms');
+      const unsubDMs = onSnapshot(dmsRef, (snapshot) => {
+        snapshot.docs.forEach((dmDoc) => {
+          const dmId = dmDoc.id;
+          // Check if this DM involves current user (ID format: uid1_uid2 sorted)
+          if (dmId.includes(currentUser.uid) && !listeningToDMs.has(dmId)) {
+            // Extract the other user's ID
+            const parts = dmId.split('_');
+            const otherUserId = parts[0] === currentUser.uid ? parts[1] : parts[0];
+
+            // Start listening to this DM
+            listeningToDMs.add(dmId);
+            listenToDM(otherUserId);
+          }
+        });
+      });
+      otherChatListeners.push(unsubDMs);
+
+      // Also listen to existing active DMs
+      activeDMs.forEach(userId => {
+        if (!listeningToDMs.has(getDMId(currentUser.uid, userId))) {
+          listenToDM(userId);
+        }
+      });
+    }
+
+    function listenToDM(otherUserId) {
+      const dmId = getDMId(currentUser.uid, otherUserId);
+      listeningToDMs.add(dmId);
+
+      const dmRef = collection(db, 'dms', dmId, 'messages');
+      const dmQuery = query(dmRef, orderBy('timestamp', 'desc'));
+      const unsubDM = onSnapshot(dmQuery, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            const msg = change.doc.data();
+            const isCurrentChat = currentChat.type === 'dm' && currentChat.id === otherUserId;
+            if (msg.senderId !== currentUser.uid && msg.timestamp) {
+              // Add to active DMs so it shows in sidebar
+              if (!activeDMs.has(otherUserId)) {
+                activeDMs.add(otherUserId);
                 localStorage.setItem('activeDMs', JSON.stringify([...activeDMs]));
-                updateUnreadIndicators();
+              }
+              // Mark as unread if not currently viewing
+              if (!isCurrentChat) {
+                unreadChats.add(`dm-${otherUserId}`);
                 if (!isPageVisible) {
                   playNotificationSound();
                 }
               }
+              updateUnreadIndicators();
             }
-          });
+          }
         });
-        otherChatListeners.push(unsubDM);
       });
+      otherChatListeners.push(unsubDM);
     }
 
     // Auth functions
