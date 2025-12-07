@@ -1171,6 +1171,7 @@
     }
 
     .docs-modal {
+      position: relative;
       width: 100%;
       max-width: 800px;
       height: 80vh;
@@ -1183,20 +1184,12 @@
     }
 
     .docs-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .docs-header-icon {
-      font-size: 24px;
+      padding: 40px 60px 20px;
     }
 
     .docs-title-input {
-      flex: 1;
-      font-size: 18px;
+      width: 100%;
+      font-size: 32px;
       font-weight: 600;
       border: none;
       background: transparent;
@@ -1208,95 +1201,64 @@
       color: var(--text-placeholder);
     }
 
-    .docs-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .docs-btn {
-      padding: 8px 16px;
+    .docs-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
       border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: transform 0.15s, opacity 0.15s;
-    }
-
-    .docs-btn:hover {
-      transform: scale(1.02);
-    }
-
-    .docs-btn.primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .docs-btn.secondary {
       background: var(--bg-hover);
-      color: var(--text-primary);
-    }
-
-    .docs-btn.danger {
-      background: #e74c3c;
-      color: white;
-    }
-
-    .docs-toolbar {
-      display: flex;
-      gap: 4px;
-      padding: 4px;
-      background: var(--bg-hover);
-      border-radius: 8px;
-    }
-
-    .docs-toolbar-btn {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: transparent;
       color: var(--text-secondary);
-      border-radius: 6px;
+      border-radius: 50%;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.15s;
+      z-index: 10;
     }
 
-    .docs-toolbar-btn:hover {
-      background: var(--bg-sidebar);
+    .docs-close-btn:hover {
+      background: var(--border-input);
       color: var(--text-primary);
     }
 
     .docs-body {
       flex: 1;
       overflow-y: auto;
-      padding: 24px 32px;
+      padding: 40px 60px;
       background: var(--bg-app);
     }
 
     .docs-editor {
       width: 100%;
-      min-height: 100%;
+      min-height: 400px;
       border: none;
       background: transparent;
       color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 16px;
-      line-height: 1.7;
+      line-height: 1.8;
       outline: none;
-    }
-
-    .docs-editor:empty:before {
-      content: attr(data-placeholder);
-      color: var(--text-placeholder);
-      pointer-events: none;
     }
 
     .docs-editor:focus {
       outline: none;
+    }
+
+    .docs-editor .ProseMirror {
+      outline: none;
+      min-height: 400px;
+    }
+
+    .docs-editor .ProseMirror p.is-editor-empty:first-child::before {
+      content: 'Start writing...';
+      color: var(--text-placeholder);
+      float: left;
+      pointer-events: none;
+      height: 0;
     }
 
     /* Markdown styles - applied directly to rendered content in docs-body */
@@ -1519,25 +1481,12 @@
   <!-- Docs Modal -->
   <div class="docs-overlay hidden" id="docsOverlay" onclick="closeDocsModal()">
     <div class="docs-modal" onclick="event.stopPropagation()">
+      <button class="docs-close-btn" onclick="closeDocsModal()">×</button>
       <div class="docs-header">
-        <span class="docs-header-icon">📄</span>
-        <input type="text" class="docs-title-input" id="docsTitle" placeholder="Untitled Document">
-        <div class="docs-toolbar">
-          <button class="docs-toolbar-btn" onclick="formatDoc('bold')" title="Bold"><b>B</b></button>
-          <button class="docs-toolbar-btn" onclick="formatDoc('italic')" title="Italic"><i>I</i></button>
-          <button class="docs-toolbar-btn" onclick="formatDoc('heading')" title="Heading">H</button>
-          <button class="docs-toolbar-btn" onclick="formatDoc('bullet')" title="Bullet List">•</button>
-          <button class="docs-toolbar-btn" onclick="formatDoc('code')" title="Code">&lt;/&gt;</button>
-          <button class="docs-toolbar-btn" onclick="formatDoc('quote')" title="Quote">"</button>
-        </div>
-        <div class="docs-actions">
-          <button class="docs-btn secondary" onclick="closeDocsModal()">Cancel</button>
-          <button class="docs-btn danger" onclick="deleteCurrentDoc()" id="docsDeleteBtn" style="display:none;">Delete</button>
-          <button class="docs-btn primary" onclick="saveDoc()">Save</button>
-        </div>
+        <input type="text" class="docs-title-input" id="docsTitle" placeholder="Untitled">
       </div>
       <div class="docs-body">
-        <div class="docs-editor" id="docsEditor" contenteditable="true" data-placeholder="Start writing... Use markdown or the toolbar above"></div>
+        <div class="docs-editor" id="docsEditor" contenteditable="true"></div>
       </div>
     </div>
   </div>
@@ -1718,145 +1667,92 @@
     // Initialize theme on page load
     initTheme();
 
-    // Docs functionality - WYSIWYG Editor
+    // Docs functionality - Simple WYSIWYG with auto-save
     let currentDocId = null;
-    let docRawContent = ''; // Store raw markdown for saving
+    let saveTimeout = null;
 
     window.openDocsModal = function(docId = null) {
       currentDocId = docId;
       document.getElementById('docsOverlay').classList.remove('hidden');
       document.getElementById('docsTitle').value = '';
       const editor = document.getElementById('docsEditor');
-      editor.innerHTML = '';
-      docRawContent = '';
-
-      // Show/hide delete button
-      document.getElementById('docsDeleteBtn').style.display = docId ? 'inline-block' : 'none';
+      editor.innerHTML = '<p><br></p>';
 
       if (docId) {
         loadDoc(docId);
       } else {
-        document.getElementById('docsTitle').focus();
+        // Create new doc immediately
+        createNewDoc().then(() => {
+          editor.focus();
+        });
       }
 
-      // Handle markdown shortcuts on input
-      editor.addEventListener('keydown', handleEditorKeydown);
+      // Set up auto-save on content change
+      editor.oninput = () => autoSave();
+      document.getElementById('docsTitle').oninput = () => autoSave();
+
+      // Listen for escape key
+      document.addEventListener('keydown', handleDocsEscape);
     };
 
-    function handleEditorKeydown(e) {
-      const editor = document.getElementById('docsEditor');
-
-      // Handle Enter key for markdown conversion
-      if (e.key === 'Enter' && !e.shiftKey) {
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const currentNode = range.startContainer;
-        const text = currentNode.textContent || '';
-
-        // Check for markdown patterns at line start
-        const patterns = [
-          { regex: /^# (.+)$/, tag: 'h1' },
-          { regex: /^## (.+)$/, tag: 'h2' },
-          { regex: /^### (.+)$/, tag: 'h3' },
-          { regex: /^- (.+)$/, tag: 'li', wrapper: 'ul' },
-          { regex: /^\* (.+)$/, tag: 'li', wrapper: 'ul' },
-          { regex: /^> (.+)$/, tag: 'blockquote' },
-          { regex: /^```$/, tag: 'pre' }
-        ];
-
-        for (const pattern of patterns) {
-          const match = text.match(pattern.regex);
-          if (match) {
-            e.preventDefault();
-
-            // Replace text with formatted element
-            const newEl = document.createElement(pattern.tag);
-            if (pattern.tag === 'pre') {
-              const code = document.createElement('code');
-              code.textContent = '';
-              newEl.appendChild(code);
-            } else {
-              newEl.textContent = match[1] || '';
-            }
-
-            if (pattern.wrapper) {
-              const wrapper = document.createElement(pattern.wrapper);
-              wrapper.appendChild(newEl);
-              currentNode.parentNode.replaceChild(wrapper, currentNode);
-            } else {
-              currentNode.parentNode.replaceChild(newEl, currentNode);
-            }
-
-            // Move cursor to end of new element
-            const newRange = document.createRange();
-            newRange.selectNodeContents(newEl);
-            newRange.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(newRange);
-
-            // Insert a new paragraph after
-            const p = document.createElement('p');
-            p.innerHTML = '<br>';
-            newEl.parentNode.insertBefore(p, newEl.nextSibling);
-            newRange.selectNodeContents(p);
-            newRange.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(newRange);
-            return;
-          }
-        }
-      }
-
-      // Handle inline formatting with keyboard shortcuts
-      if (e.metaKey || e.ctrlKey) {
-        if (e.key === 'b') {
-          e.preventDefault();
-          document.execCommand('bold', false, null);
-        } else if (e.key === 'i') {
-          e.preventDefault();
-          document.execCommand('italic', false, null);
-        }
+    function handleDocsEscape(e) {
+      if (e.key === 'Escape') {
+        closeDocsModal();
       }
     }
 
-    // Toolbar formatting
-    window.formatDoc = function(type) {
-      const editor = document.getElementById('docsEditor');
-      editor.focus();
+    async function createNewDoc() {
+      if (!currentUser) return;
 
-      switch(type) {
-        case 'bold':
-          document.execCommand('bold', false, null);
-          break;
-        case 'italic':
-          document.execCommand('italic', false, null);
-          break;
-        case 'heading':
-          document.execCommand('formatBlock', false, 'h2');
-          break;
-        case 'bullet':
-          document.execCommand('insertUnorderedList', false, null);
-          break;
-        case 'code':
-          const selection = window.getSelection();
-          if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const code = document.createElement('code');
-            code.textContent = selection.toString() || 'code';
-            range.deleteContents();
-            range.insertNode(code);
-          }
-          break;
-        case 'quote':
-          document.execCommand('formatBlock', false, 'blockquote');
-          break;
+      try {
+        const newDocRef = doc(collection(db, 'docs'));
+        await setDoc(newDocRef, {
+          title: '',
+          content: '',
+          createdAt: serverTimestamp(),
+          createdBy: currentUser.uid,
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid
+        });
+        currentDocId = newDocRef.id;
+      } catch (error) {
+        console.error('Error creating doc:', error);
       }
-    };
+    }
+
+    function autoSave() {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => saveDocContent(), 500);
+    }
+
+    async function saveDocContent() {
+      if (!currentUser || !currentDocId) return;
+
+      const title = document.getElementById('docsTitle').value.trim() || 'Untitled';
+      const editor = document.getElementById('docsEditor');
+      const content = editor.innerHTML;
+
+      try {
+        await setDoc(doc(db, 'docs', currentDocId), {
+          title,
+          content,
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid
+        }, { merge: true });
+      } catch (error) {
+        console.error('Error auto-saving:', error);
+      }
+    }
 
     window.closeDocsModal = function() {
+      // Final save before closing
+      if (currentDocId) {
+        saveDocContent();
+      }
       document.getElementById('docsOverlay').classList.add('hidden');
+      document.removeEventListener('keydown', handleDocsEscape);
       currentDocId = null;
-      docRawContent = '';
+      if (saveTimeout) clearTimeout(saveTimeout);
     };
 
     async function loadDoc(docId) {
@@ -1866,78 +1762,30 @@
         if (docSnap.exists()) {
           const data = docSnap.data();
           document.getElementById('docsTitle').value = data.title || '';
-          docRawContent = data.content || '';
-
-          // Render markdown content in the editor
           const editor = document.getElementById('docsEditor');
-          if (typeof marked !== 'undefined' && docRawContent) {
-            editor.innerHTML = marked.parse(docRawContent);
+
+          // If content is HTML (new format), use it directly
+          // Otherwise treat as plain text
+          if (data.content && data.content.startsWith('<')) {
+            editor.innerHTML = data.content;
+          } else if (data.content) {
+            // Convert plain text/markdown to HTML
+            if (typeof marked !== 'undefined') {
+              editor.innerHTML = marked.parse(data.content);
+            } else {
+              editor.innerHTML = `<p>${data.content.replace(/\n/g, '</p><p>')}</p>`;
+            }
           } else {
-            editor.textContent = docRawContent;
+            editor.innerHTML = '<p><br></p>';
           }
+
+          // Focus editor
+          editor.focus();
         }
       } catch (error) {
         console.error('Error loading doc:', error);
       }
     }
-
-    // Convert HTML back to markdown-ish plain text for storage
-    function getEditorContent() {
-      const editor = document.getElementById('docsEditor');
-      // Get innerText to preserve some formatting
-      return editor.innerText || '';
-    }
-
-    window.saveDoc = async function() {
-      if (!currentUser) {
-        alert('Please sign in to save documents');
-        return;
-      }
-
-      const title = document.getElementById('docsTitle').value.trim() || 'Untitled Document';
-      const content = getEditorContent();
-
-      try {
-        if (currentDocId) {
-          await setDoc(doc(db, 'docs', currentDocId), {
-            title,
-            content,
-            updatedAt: serverTimestamp(),
-            updatedBy: currentUser.uid
-          }, { merge: true });
-        } else {
-          const newDocRef = doc(collection(db, 'docs'));
-          await setDoc(newDocRef, {
-            title,
-            content,
-            createdAt: serverTimestamp(),
-            createdBy: currentUser.uid,
-            updatedAt: serverTimestamp(),
-            updatedBy: currentUser.uid
-          });
-          currentDocId = newDocRef.id;
-        }
-
-        closeDocsModal();
-      } catch (error) {
-        console.error('Error saving doc:', error);
-        alert('Failed to save document. Please try again.');
-      }
-    };
-
-    window.deleteCurrentDoc = async function() {
-      if (!currentDocId) return;
-
-      if (confirm('Are you sure you want to delete this document?')) {
-        try {
-          await firebaseDeleteDoc(doc(db, 'docs', currentDocId));
-          closeDocsModal();
-        } catch (error) {
-          console.error('Error deleting doc:', error);
-          alert('Failed to delete document.');
-        }
-      }
-    };
 
     let allDocs = []; // Store docs for Cmd+K search
 
