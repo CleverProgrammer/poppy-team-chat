@@ -1242,47 +1242,65 @@
       color: white;
     }
 
+    .docs-toolbar {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bg-hover);
+      border-radius: 8px;
+    }
+
+    .docs-toolbar-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .docs-toolbar-btn:hover {
+      background: var(--bg-sidebar);
+      color: var(--text-primary);
+    }
+
     .docs-body {
       flex: 1;
-      display: flex;
-      overflow: hidden;
+      overflow-y: auto;
+      padding: 24px 32px;
+      background: var(--bg-app);
     }
 
     .docs-editor {
-      flex: 1;
-      padding: 20px;
+      width: 100%;
+      min-height: 100%;
       border: none;
-      background: var(--bg-messages);
+      background: transparent;
       color: var(--text-primary);
-      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      resize: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
       outline: none;
     }
 
-    .docs-editor::placeholder {
+    .docs-editor:empty:before {
+      content: attr(data-placeholder);
       color: var(--text-placeholder);
+      pointer-events: none;
     }
 
-    .docs-preview {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      background: var(--bg-app);
-      border-left: 1px solid var(--border-light);
+    .docs-editor:focus {
+      outline: none;
     }
 
-    .docs-preview.hidden {
-      display: none;
-    }
-
-    .docs-editor.full-width {
-      border-right: none;
-    }
-
-    /* Markdown styles */
-    .docs-preview h1 {
+    /* Markdown styles - applied directly to rendered content in docs-body */
+    .docs-body h1 {
       font-size: 2em;
       font-weight: 700;
       margin-bottom: 16px;
@@ -1291,38 +1309,38 @@
       padding-bottom: 8px;
     }
 
-    .docs-preview h2 {
+    .docs-body h2 {
       font-size: 1.5em;
       font-weight: 600;
       margin: 24px 0 12px;
       color: var(--text-primary);
     }
 
-    .docs-preview h3 {
+    .docs-body h3 {
       font-size: 1.25em;
       font-weight: 600;
       margin: 20px 0 10px;
       color: var(--text-primary);
     }
 
-    .docs-preview p {
+    .docs-body p {
       margin-bottom: 12px;
       line-height: 1.7;
       color: var(--text-primary);
     }
 
-    .docs-preview ul, .docs-preview ol {
+    .docs-body ul, .docs-body ol {
       margin: 12px 0;
       padding-left: 24px;
       color: var(--text-primary);
     }
 
-    .docs-preview li {
+    .docs-body li {
       margin-bottom: 6px;
       line-height: 1.6;
     }
 
-    .docs-preview code {
+    .docs-body code {
       background: var(--bg-hover);
       padding: 2px 6px;
       border-radius: 4px;
@@ -1330,7 +1348,7 @@
       font-size: 0.9em;
     }
 
-    .docs-preview pre {
+    .docs-body pre {
       background: var(--bg-sidebar);
       padding: 16px;
       border-radius: 8px;
@@ -1338,13 +1356,13 @@
       margin: 16px 0;
     }
 
-    .docs-preview pre code {
+    .docs-body pre code {
       background: none;
       padding: 0;
       color: #e0e0e0;
     }
 
-    .docs-preview blockquote {
+    .docs-body blockquote {
       border-left: 4px solid #667eea;
       padding-left: 16px;
       margin: 16px 0;
@@ -1352,49 +1370,86 @@
       font-style: italic;
     }
 
-    .docs-preview a {
+    .docs-body a {
       color: #667eea;
       text-decoration: none;
     }
 
-    .docs-preview a:hover {
+    .docs-body a:hover {
       text-decoration: underline;
     }
 
-    .docs-preview strong {
+    .docs-body strong {
       font-weight: 600;
     }
 
-    .docs-preview em {
+    .docs-body em {
       font-style: italic;
     }
 
-    .docs-preview hr {
+    .docs-body hr {
       border: none;
       border-top: 1px solid var(--border-light);
       margin: 24px 0;
     }
 
-    .docs-toggle-preview {
-      padding: 8px 12px;
+    /* Editor formatting styles */
+    .docs-editor h1 {
+      font-size: 2em;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+
+    .docs-editor h2 {
+      font-size: 1.5em;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: var(--text-primary);
+    }
+
+    .docs-editor h3 {
+      font-size: 1.25em;
+      font-weight: 600;
+      margin: 20px 0 10px;
+      color: var(--text-primary);
+    }
+
+    .docs-editor p {
+      margin-bottom: 12px;
+    }
+
+    .docs-editor ul, .docs-editor ol {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+
+    .docs-editor li {
+      margin-bottom: 6px;
+    }
+
+    .docs-editor code {
       background: var(--bg-hover);
-      border: none;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+
+    .docs-editor pre {
+      background: var(--bg-sidebar);
+      padding: 16px;
       border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    .docs-editor blockquote {
+      border-left: 4px solid #667eea;
+      padding-left: 16px;
+      margin: 16px 0;
       color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .docs-toggle-preview:hover {
-      background: var(--border-input);
-    }
-
-    .docs-toggle-preview.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      font-style: italic;
     }
 
     /* Docs list in sidebar */
@@ -1467,27 +1522,22 @@
       <div class="docs-header">
         <span class="docs-header-icon">📄</span>
         <input type="text" class="docs-title-input" id="docsTitle" placeholder="Untitled Document">
-        <button class="docs-toggle-preview active" id="docsTogglePreview" onclick="toggleDocsPreview()">
-          <span>👁</span> Preview
-        </button>
+        <div class="docs-toolbar">
+          <button class="docs-toolbar-btn" onclick="formatDoc('bold')" title="Bold"><b>B</b></button>
+          <button class="docs-toolbar-btn" onclick="formatDoc('italic')" title="Italic"><i>I</i></button>
+          <button class="docs-toolbar-btn" onclick="formatDoc('heading')" title="Heading">H</button>
+          <button class="docs-toolbar-btn" onclick="formatDoc('bullet')" title="Bullet List">•</button>
+          <button class="docs-toolbar-btn" onclick="formatDoc('code')" title="Code">&lt;/&gt;</button>
+          <button class="docs-toolbar-btn" onclick="formatDoc('quote')" title="Quote">"</button>
+        </div>
         <div class="docs-actions">
           <button class="docs-btn secondary" onclick="closeDocsModal()">Cancel</button>
+          <button class="docs-btn danger" onclick="deleteCurrentDoc()" id="docsDeleteBtn" style="display:none;">Delete</button>
           <button class="docs-btn primary" onclick="saveDoc()">Save</button>
         </div>
       </div>
       <div class="docs-body">
-        <textarea class="docs-editor" id="docsEditor" placeholder="Write your document here...
-
-Markdown supported:
-# Heading 1
-## Heading 2
-**bold** and *italic*
-- bullet points
-1. numbered lists
-`code` and ```code blocks```
-> quotes
-[links](url)"></textarea>
-        <div class="docs-preview" id="docsPreview"></div>
+        <div class="docs-editor" id="docsEditor" contenteditable="true" data-placeholder="Start writing... Use markdown or the toolbar above"></div>
       </div>
     </div>
   </div>
@@ -1607,7 +1657,7 @@ Markdown supported:
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, updateDoc, query, orderBy, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc as firebaseDeleteDoc, query, orderBy, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -1668,60 +1718,146 @@ Markdown supported:
     // Initialize theme on page load
     initTheme();
 
-    // Docs functionality
+    // Docs functionality - WYSIWYG Editor
     let currentDocId = null;
-    let docsPreviewVisible = true;
+    let docRawContent = ''; // Store raw markdown for saving
 
     window.openDocsModal = function(docId = null) {
       currentDocId = docId;
       document.getElementById('docsOverlay').classList.remove('hidden');
       document.getElementById('docsTitle').value = '';
-      document.getElementById('docsEditor').value = '';
-      document.getElementById('docsPreview').innerHTML = '';
+      const editor = document.getElementById('docsEditor');
+      editor.innerHTML = '';
+      docRawContent = '';
+
+      // Show/hide delete button
+      document.getElementById('docsDeleteBtn').style.display = docId ? 'inline-block' : 'none';
 
       if (docId) {
-        // Load existing doc
         loadDoc(docId);
       } else {
         document.getElementById('docsTitle').focus();
       }
 
-      // Set up live preview
+      // Handle markdown shortcuts on input
+      editor.addEventListener('keydown', handleEditorKeydown);
+    };
+
+    function handleEditorKeydown(e) {
       const editor = document.getElementById('docsEditor');
-      editor.addEventListener('input', updateDocsPreview);
+
+      // Handle Enter key for markdown conversion
+      if (e.key === 'Enter' && !e.shiftKey) {
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const currentNode = range.startContainer;
+        const text = currentNode.textContent || '';
+
+        // Check for markdown patterns at line start
+        const patterns = [
+          { regex: /^# (.+)$/, tag: 'h1' },
+          { regex: /^## (.+)$/, tag: 'h2' },
+          { regex: /^### (.+)$/, tag: 'h3' },
+          { regex: /^- (.+)$/, tag: 'li', wrapper: 'ul' },
+          { regex: /^\* (.+)$/, tag: 'li', wrapper: 'ul' },
+          { regex: /^> (.+)$/, tag: 'blockquote' },
+          { regex: /^```$/, tag: 'pre' }
+        ];
+
+        for (const pattern of patterns) {
+          const match = text.match(pattern.regex);
+          if (match) {
+            e.preventDefault();
+
+            // Replace text with formatted element
+            const newEl = document.createElement(pattern.tag);
+            if (pattern.tag === 'pre') {
+              const code = document.createElement('code');
+              code.textContent = '';
+              newEl.appendChild(code);
+            } else {
+              newEl.textContent = match[1] || '';
+            }
+
+            if (pattern.wrapper) {
+              const wrapper = document.createElement(pattern.wrapper);
+              wrapper.appendChild(newEl);
+              currentNode.parentNode.replaceChild(wrapper, currentNode);
+            } else {
+              currentNode.parentNode.replaceChild(newEl, currentNode);
+            }
+
+            // Move cursor to end of new element
+            const newRange = document.createRange();
+            newRange.selectNodeContents(newEl);
+            newRange.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+
+            // Insert a new paragraph after
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            newEl.parentNode.insertBefore(p, newEl.nextSibling);
+            newRange.selectNodeContents(p);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            return;
+          }
+        }
+      }
+
+      // Handle inline formatting with keyboard shortcuts
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key === 'b') {
+          e.preventDefault();
+          document.execCommand('bold', false, null);
+        } else if (e.key === 'i') {
+          e.preventDefault();
+          document.execCommand('italic', false, null);
+        }
+      }
+    }
+
+    // Toolbar formatting
+    window.formatDoc = function(type) {
+      const editor = document.getElementById('docsEditor');
+      editor.focus();
+
+      switch(type) {
+        case 'bold':
+          document.execCommand('bold', false, null);
+          break;
+        case 'italic':
+          document.execCommand('italic', false, null);
+          break;
+        case 'heading':
+          document.execCommand('formatBlock', false, 'h2');
+          break;
+        case 'bullet':
+          document.execCommand('insertUnorderedList', false, null);
+          break;
+        case 'code':
+          const selection = window.getSelection();
+          if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const code = document.createElement('code');
+            code.textContent = selection.toString() || 'code';
+            range.deleteContents();
+            range.insertNode(code);
+          }
+          break;
+        case 'quote':
+          document.execCommand('formatBlock', false, 'blockquote');
+          break;
+      }
     };
 
     window.closeDocsModal = function() {
       document.getElementById('docsOverlay').classList.add('hidden');
       currentDocId = null;
+      docRawContent = '';
     };
-
-    window.toggleDocsPreview = function() {
-      docsPreviewVisible = !docsPreviewVisible;
-      const preview = document.getElementById('docsPreview');
-      const editor = document.getElementById('docsEditor');
-      const btn = document.getElementById('docsTogglePreview');
-
-      if (docsPreviewVisible) {
-        preview.classList.remove('hidden');
-        editor.classList.remove('full-width');
-        btn.classList.add('active');
-        updateDocsPreview();
-      } else {
-        preview.classList.add('hidden');
-        editor.classList.add('full-width');
-        btn.classList.remove('active');
-      }
-    };
-
-    function updateDocsPreview() {
-      const content = document.getElementById('docsEditor').value;
-      const preview = document.getElementById('docsPreview');
-
-      if (typeof marked !== 'undefined' && docsPreviewVisible) {
-        preview.innerHTML = marked.parse(content);
-      }
-    }
 
     async function loadDoc(docId) {
       try {
@@ -1730,12 +1866,26 @@ Markdown supported:
         if (docSnap.exists()) {
           const data = docSnap.data();
           document.getElementById('docsTitle').value = data.title || '';
-          document.getElementById('docsEditor').value = data.content || '';
-          updateDocsPreview();
+          docRawContent = data.content || '';
+
+          // Render markdown content in the editor
+          const editor = document.getElementById('docsEditor');
+          if (typeof marked !== 'undefined' && docRawContent) {
+            editor.innerHTML = marked.parse(docRawContent);
+          } else {
+            editor.textContent = docRawContent;
+          }
         }
       } catch (error) {
         console.error('Error loading doc:', error);
       }
+    }
+
+    // Convert HTML back to markdown-ish plain text for storage
+    function getEditorContent() {
+      const editor = document.getElementById('docsEditor');
+      // Get innerText to preserve some formatting
+      return editor.innerText || '';
     }
 
     window.saveDoc = async function() {
@@ -1745,11 +1895,10 @@ Markdown supported:
       }
 
       const title = document.getElementById('docsTitle').value.trim() || 'Untitled Document';
-      const content = document.getElementById('docsEditor').value;
+      const content = getEditorContent();
 
       try {
         if (currentDocId) {
-          // Update existing doc
           await setDoc(doc(db, 'docs', currentDocId), {
             title,
             content,
@@ -1757,7 +1906,6 @@ Markdown supported:
             updatedBy: currentUser.uid
           }, { merge: true });
         } else {
-          // Create new doc
           const newDocRef = doc(collection(db, 'docs'));
           await setDoc(newDocRef, {
             title,
@@ -1777,6 +1925,22 @@ Markdown supported:
       }
     };
 
+    window.deleteCurrentDoc = async function() {
+      if (!currentDocId) return;
+
+      if (confirm('Are you sure you want to delete this document?')) {
+        try {
+          await firebaseDeleteDoc(doc(db, 'docs', currentDocId));
+          closeDocsModal();
+        } catch (error) {
+          console.error('Error deleting doc:', error);
+          alert('Failed to delete document.');
+        }
+      }
+    };
+
+    let allDocs = []; // Store docs for Cmd+K search
+
     function loadDocs() {
       if (!currentUser) return;
 
@@ -1786,9 +1950,12 @@ Markdown supported:
       onSnapshot(docsQuery, (snapshot) => {
         const docsList = document.getElementById('docsList');
         docsList.innerHTML = '';
+        allDocs = []; // Reset docs array
 
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
+          allDocs.push({ id: docSnap.id, ...data });
+
           const div = document.createElement('div');
           div.className = 'doc-item';
           div.onclick = () => openDocsModal(docSnap.id);
@@ -2941,6 +3108,12 @@ Examples:
       );
       matchingChannels.forEach(c => filteredItems.push({ ...c, type: 'channel' }));
 
+      // Filter docs
+      const matchingDocs = allDocs.filter(d =>
+        (d.title?.toLowerCase().includes(query) || d.content?.toLowerCase().includes(query))
+      );
+      matchingDocs.forEach(d => filteredItems.push({ type: 'doc', doc: d }));
+
       // Filter active DMs (users you've messaged)
       activeDMs.forEach(dmUserId => {
         const user = allUsers.find(u => u.uid === dmUserId);
@@ -2975,6 +3148,7 @@ Examples:
       // Group items by type
       const actions = filteredItems.filter(i => i.type === 'action');
       const channels = filteredItems.filter(i => i.type === 'channel');
+      const docs = filteredItems.filter(i => i.type === 'doc');
       const dms = filteredItems.filter(i => i.type === 'dm');
       const users = filteredItems.filter(i => i.type === 'user');
 
@@ -3010,6 +3184,25 @@ Examples:
                 <div class="cmd-palette-item-info">
                   <div class="cmd-palette-item-name">${escapeHtml(item.name)}</div>
                   <div class="cmd-palette-item-hint">${escapeHtml(item.hint)}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>`;
+      }
+
+      if (docs.length > 0) {
+        html += `<div class="cmd-palette-section">
+          <div class="cmd-palette-section-title">Documents</div>
+          ${docs.map(item => {
+            const idx = globalIndex++;
+            const preview = (item.doc.content || '').substring(0, 50).replace(/\n/g, ' ');
+            return `
+              <div class="cmd-palette-item ${idx === selectedIndex ? 'selected' : ''}" onclick="selectCmdItem(${idx})">
+                <div class="cmd-palette-item-icon">📄</div>
+                <div class="cmd-palette-item-info">
+                  <div class="cmd-palette-item-name">${escapeHtml(item.doc.title || 'Untitled')}</div>
+                  <div class="cmd-palette-item-hint">${escapeHtml(preview)}${preview.length >= 50 ? '...' : ''}</div>
                 </div>
               </div>
             `;
@@ -3068,6 +3261,9 @@ Examples:
       } else if (item.type === 'channel') {
         switchToChannel(item.id);
         closeCmdPalette();
+      } else if (item.type === 'doc') {
+        closeCmdPalette();
+        openDocsModal(item.doc.id);
       } else if (item.type === 'dm' || item.type === 'user') {
         switchToDM(item.user);
       }
