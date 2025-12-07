@@ -2314,27 +2314,34 @@
           },
           body: JSON.stringify({
             query: query,
-            top_k: 8,
+            top_k: 10,
             rerank: true
           })
         });
 
         if (!response.ok) {
-          console.error('🔍 Ragie: Error', response.status);
+          const errorText = await response.text();
+          console.error('🔍 Ragie: Error', response.status, errorText);
           return null;
         }
 
         const data = await response.json();
-        console.log('🔍 Ragie: Got', data.scored_chunks?.length || 0, 'chunks');
+        console.log('🔍 Ragie: Full response:', JSON.stringify(data, null, 2));
 
-        if (!data.scored_chunks || data.scored_chunks.length === 0) {
+        // Handle different response formats
+        const chunks = data.scored_chunks || data.chunks || data.results || [];
+        console.log('🔍 Ragie: Got', chunks.length, 'chunks');
+
+        if (chunks.length === 0) {
           return null;
         }
 
         // Format the chunks into context
-        const ragContext = data.scored_chunks.map((chunk, i) => {
-          const source = chunk.document_metadata?.title || chunk.document_metadata?.filename || 'Notion';
-          return `[Source: ${source}]\n${chunk.text}`;
+        const ragContext = chunks.map((chunk, i) => {
+          const metadata = chunk.document_metadata || chunk.metadata || {};
+          const source = metadata.title || metadata.filename || metadata.name || 'Notion';
+          const text = chunk.text || chunk.content || chunk.page_content || '';
+          return `[Source: ${source}]\n${text}`;
         }).join('\n\n---\n\n');
 
         return ragContext;
@@ -2343,6 +2350,15 @@
         return null;
       }
     }
+
+    // Poppy AI bot user object
+    const POPPY_BOT = {
+      uid: 'poppy-ai-bot',
+      displayName: 'Poppy AI',
+      email: 'poppy@ai.bot',
+      photoURL: 'https://ui-avatars.com/api/?name=Poppy+AI&background=667eea&color=fff',
+      isBot: true
+    };
 
     async function askPoppy(userQuestion) {
       if (isAIProcessing) return;
@@ -2554,6 +2570,26 @@ ${ragieContext}
       }
 
       try {
+        // Fetch knowledge base context
+        const docsContext = await getAllDocsContent();
+        const ragieContext = await searchRagie(question);
+
+        let systemPrompt = `You are a helpful assistant. Give SHORT, direct answers that can be inserted into a chat message.
+NO markdown, NO formatting - just plain text.
+If asked a calculation, give JUST the answer.
+If asked to write something, keep it brief and conversational.
+Examples:
+- "what's 100/5?" → "20"
+- "what's 20x roas?" → "20x return on ad spend"
+- "write a greeting" → "Hey! Hope you're having a great day"`;
+
+        if (docsContext) {
+          systemPrompt += `\n\nYou have access to these team documents:\n${docsContext}`;
+        }
+        if (ragieContext) {
+          systemPrompt += `\n\nYou also have access to the team's Notion knowledge base:\n${ragieContext}`;
+        }
+
         const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -2565,14 +2601,7 @@ ${ragieContext}
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 500,
-            system: `You are a helpful assistant. Give SHORT, direct answers that can be inserted into a chat message.
-NO markdown, NO formatting - just plain text.
-If asked a calculation, give JUST the answer.
-If asked to write something, keep it brief and conversational.
-Examples:
-- "what's 100/5?" → "20"
-- "what's 20x roas?" → "20x return on ad spend"
-- "write a greeting" → "Hey! Hope you're having a great day"`,
+            system: systemPrompt,
             messages: [
               { role: 'user', content: question }
             ]
@@ -2918,8 +2947,21 @@ Examples:
       const dmList = document.getElementById('dmList');
       dmList.innerHTML = '';
 
-      activeDMs.forEach(odMUserId => {
-        const user = allUsers.find(u => u.uid === odMUserId);
+      activeDMs.forEach(dmUserId => {
+        // Handle Poppy bot
+        if (dmUserId === 'poppy-ai-bot') {
+          const div = document.createElement('div');
+          div.className = `dm-item ${currentChat.type === 'dm' && currentChat.id === 'poppy-ai-bot' ? 'active' : ''}`;
+          div.onclick = () => switchToDM(POPPY_BOT);
+          div.innerHTML = `
+            <img src="${POPPY_BOT.photoURL}" alt="Poppy AI">
+            <span>Poppy AI 🤖</span>
+          `;
+          dmList.appendChild(div);
+          return;
+        }
+
+        const user = allUsers.find(u => u.uid === dmUserId);
         if (user) {
           const div = document.createElement('div');
           div.className = `dm-item ${currentChat.type === 'dm' && currentChat.id === user.uid ? 'active' : ''}`;
@@ -3284,12 +3326,20 @@ Examples:
         }
       }
 
+      // Check if we're in a Poppy DM - every message triggers AI
+      const isInPoppyDM = currentChat.type === 'dm' && currentChat.id === 'poppy-ai-bot';
+
       // Check for @Poppy mention - match @Poppy anywhere in text and capture everything after
       const poppyMention = text.match(/@poppy\s*(.*)/i);
       const aiQuestion = poppyMention && poppyMention[1]?.trim() ? poppyMention[1].trim() : null;
-      console.log('Poppy check:', { text, poppyMention, aiQuestion });
+      console.log('Poppy check:', { text, poppyMention, aiQuestion, isInPoppyDM });
 
-      await sendMessageInternal(text, !!aiQuestion, aiQuestion);
+      // In Poppy DM, use entire message as question
+      if (isInPoppyDM) {
+        await sendMessageInternal(text, true, text);
+      } else {
+        await sendMessageInternal(text, !!aiQuestion, aiQuestion);
+      }
     };
 
     // Internal function to send message
@@ -3371,6 +3421,11 @@ Examples:
         filteredItems.push({ type: 'action', action: 'new-doc', name: 'New Document', hint: 'Create a new document', icon: '📄' });
       }
 
+      // Always show Poppy AI if query matches
+      if ('poppy'.includes(query) || 'ai'.includes(query) || 'bot'.includes(query) || query === '') {
+        filteredItems.push({ type: 'bot', user: POPPY_BOT });
+      }
+
       // Filter channels
       const matchingChannels = CHANNELS.filter(c =>
         c.name.toLowerCase().includes(query)
@@ -3383,8 +3438,12 @@ Examples:
       );
       matchingDocs.forEach(d => filteredItems.push({ type: 'doc', doc: d }));
 
-      // Filter active DMs (users you've messaged)
+      // Filter active DMs (users you've messaged) - include Poppy if active
       activeDMs.forEach(dmUserId => {
+        if (dmUserId === 'poppy-ai-bot') {
+          // Poppy already added above
+          return;
+        }
         const user = allUsers.find(u => u.uid === dmUserId);
         if (user && (user.displayName?.toLowerCase().includes(query) || user.email?.toLowerCase().includes(query))) {
           filteredItems.push({ type: 'dm', user });
@@ -3416,6 +3475,7 @@ Examples:
 
       // Group items by type
       const actions = filteredItems.filter(i => i.type === 'action');
+      const bots = filteredItems.filter(i => i.type === 'bot');
       const channels = filteredItems.filter(i => i.type === 'channel');
       const docs = filteredItems.filter(i => i.type === 'doc');
       const dms = filteredItems.filter(i => i.type === 'dm');
@@ -3435,6 +3495,24 @@ Examples:
                 <div class="cmd-palette-item-info">
                   <div class="cmd-palette-item-name">${escapeHtml(item.name)}</div>
                   <div class="cmd-palette-item-hint">${escapeHtml(item.hint)}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>`;
+      }
+
+      if (bots.length > 0) {
+        html += `<div class="cmd-palette-section">
+          <div class="cmd-palette-section-title">AI Assistant</div>
+          ${bots.map(item => {
+            const idx = globalIndex++;
+            return `
+              <div class="cmd-palette-item ${idx === selectedIndex ? 'selected' : ''}" onclick="selectCmdItem(${idx})">
+                <img src="${item.user.photoURL}" alt="${item.user.displayName}" style="border-radius: 50%;">
+                <div class="cmd-palette-item-info">
+                  <div class="cmd-palette-item-name">${escapeHtml(item.user.displayName)} 🤖</div>
+                  <div class="cmd-palette-item-hint">Private chat with AI - knows your Notion docs</div>
                 </div>
               </div>
             `;
@@ -3527,6 +3605,9 @@ Examples:
           closeCmdPalette();
           openDocsModal();
         }
+      } else if (item.type === 'bot') {
+        switchToDM(item.user);
+        closeCmdPalette();
       } else if (item.type === 'channel') {
         switchToChannel(item.id);
         closeCmdPalette();
