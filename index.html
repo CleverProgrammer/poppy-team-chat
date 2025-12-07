@@ -1150,7 +1150,7 @@
   <!-- Command Palette -->
   <div class="cmd-palette-overlay hidden" id="cmdPalette" onclick="closeCmdPalette(event)">
     <div class="cmd-palette" onclick="event.stopPropagation()">
-      <input type="text" class="cmd-palette-input" id="cmdInput" placeholder="Search people to message..." oninput="filterUsers()">
+      <input type="text" class="cmd-palette-input" id="cmdInput" placeholder="Search channels, messages, people..." oninput="filterCmdPalette()">
       <div class="cmd-palette-results" id="cmdResults">
         <div class="cmd-palette-empty">Start typing to search...</div>
       </div>
@@ -2328,7 +2328,7 @@ Examples:
       document.getElementById('cmdPalette').classList.remove('hidden');
       document.getElementById('cmdInput').value = '';
       document.getElementById('cmdInput').focus();
-      filterUsers();
+      filterCmdPalette();
     };
 
     window.closeCmdPalette = function(event) {
@@ -2338,44 +2338,132 @@ Examples:
     };
 
     let selectedIndex = 0;
-    let filteredUsers = [];
+    let filteredItems = []; // Combined list of channels, DMs, and users
 
-    window.filterUsers = function() {
+    // Available channels (can be expanded later)
+    const CHANNELS = [
+      { type: 'channel', id: 'general', name: 'general', hint: 'Team chat' }
+    ];
+
+    window.filterCmdPalette = function() {
       const query = document.getElementById('cmdInput').value.toLowerCase();
       const results = document.getElementById('cmdResults');
 
-      filteredUsers = allUsers.filter(u =>
-        u.displayName?.toLowerCase().includes(query) ||
-        u.email?.toLowerCase().includes(query)
+      filteredItems = [];
+
+      // Filter channels
+      const matchingChannels = CHANNELS.filter(c =>
+        c.name.toLowerCase().includes(query)
       );
+      matchingChannels.forEach(c => filteredItems.push({ ...c, type: 'channel' }));
+
+      // Filter active DMs (users you've messaged)
+      activeDMs.forEach(dmUserId => {
+        const user = allUsers.find(u => u.uid === dmUserId);
+        if (user && (user.displayName?.toLowerCase().includes(query) || user.email?.toLowerCase().includes(query))) {
+          filteredItems.push({ type: 'dm', user });
+        }
+      });
+
+      // Filter all users (for starting new DMs)
+      const matchingUsers = allUsers.filter(u =>
+        (u.displayName?.toLowerCase().includes(query) || u.email?.toLowerCase().includes(query)) &&
+        !activeDMs.has(u.uid) // Don't show users already in active DMs
+      );
+      matchingUsers.forEach(u => filteredItems.push({ type: 'user', user: u }));
 
       selectedIndex = 0; // Auto-select first result
 
-      if (filteredUsers.length === 0) {
-        results.innerHTML = '<div class="cmd-palette-empty">No users found</div>';
+      if (filteredItems.length === 0) {
+        results.innerHTML = '<div class="cmd-palette-empty">No results found</div>';
         return;
       }
 
       renderCmdResults();
     };
 
+    // For backwards compatibility
+    window.filterUsers = window.filterCmdPalette;
+
     function renderCmdResults() {
       const results = document.getElementById('cmdResults');
-      results.innerHTML = `
-        <div class="cmd-palette-section">
-          <div class="cmd-palette-section-title">People</div>
-          ${filteredUsers.map((user, index) => `
-            <div class="cmd-palette-item ${index === selectedIndex ? 'selected' : ''}" onclick="switchToDM(${JSON.stringify(user).replace(/"/g, '&quot;')})">
-              <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName)}" alt="${user.displayName}">
-              <div class="cmd-palette-item-info">
-                <div class="cmd-palette-item-name">${escapeHtml(user.displayName)}</div>
-                <div class="cmd-palette-item-hint">${escapeHtml(user.email)}</div>
+
+      // Group items by type
+      const channels = filteredItems.filter(i => i.type === 'channel');
+      const dms = filteredItems.filter(i => i.type === 'dm');
+      const users = filteredItems.filter(i => i.type === 'user');
+
+      let html = '';
+      let globalIndex = 0;
+
+      if (channels.length > 0) {
+        html += `<div class="cmd-palette-section">
+          <div class="cmd-palette-section-title">Channels</div>
+          ${channels.map(item => {
+            const idx = globalIndex++;
+            return `
+              <div class="cmd-palette-item ${idx === selectedIndex ? 'selected' : ''}" onclick="selectCmdItem(${idx})">
+                <div class="cmd-palette-item-icon">#</div>
+                <div class="cmd-palette-item-info">
+                  <div class="cmd-palette-item-name">${escapeHtml(item.name)}</div>
+                  <div class="cmd-palette-item-hint">${escapeHtml(item.hint)}</div>
+                </div>
               </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+            `;
+          }).join('')}
+        </div>`;
+      }
+
+      if (dms.length > 0) {
+        html += `<div class="cmd-palette-section">
+          <div class="cmd-palette-section-title">Recent Messages</div>
+          ${dms.map(item => {
+            const idx = globalIndex++;
+            return `
+              <div class="cmd-palette-item ${idx === selectedIndex ? 'selected' : ''}" onclick="selectCmdItem(${idx})">
+                <img src="${item.user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.user.displayName)}" alt="${item.user.displayName}">
+                <div class="cmd-palette-item-info">
+                  <div class="cmd-palette-item-name">${escapeHtml(item.user.displayName)}</div>
+                  <div class="cmd-palette-item-hint">${escapeHtml(item.user.email)}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>`;
+      }
+
+      if (users.length > 0) {
+        html += `<div class="cmd-palette-section">
+          <div class="cmd-palette-section-title">People</div>
+          ${users.map(item => {
+            const idx = globalIndex++;
+            return `
+              <div class="cmd-palette-item ${idx === selectedIndex ? 'selected' : ''}" onclick="selectCmdItem(${idx})">
+                <img src="${item.user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.user.displayName)}" alt="${item.user.displayName}">
+                <div class="cmd-palette-item-info">
+                  <div class="cmd-palette-item-name">${escapeHtml(item.user.displayName)}</div>
+                  <div class="cmd-palette-item-hint">${escapeHtml(item.user.email)}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>`;
+      }
+
+      results.innerHTML = html;
     }
+
+    window.selectCmdItem = function(index) {
+      const item = filteredItems[index];
+      if (!item) return;
+
+      if (item.type === 'channel') {
+        switchToChannel(item.id);
+        closeCmdPalette();
+      } else if (item.type === 'dm' || item.type === 'user') {
+        switchToDM(item.user);
+      }
+    };
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -2389,15 +2477,15 @@ Examples:
       if (!cmdPalette.classList.contains('hidden')) {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          selectedIndex = Math.min(selectedIndex + 1, filteredUsers.length - 1);
+          selectedIndex = Math.min(selectedIndex + 1, filteredItems.length - 1);
           renderCmdResults();
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
           selectedIndex = Math.max(selectedIndex - 1, 0);
           renderCmdResults();
-        } else if (e.key === 'Enter' && filteredUsers.length > 0) {
+        } else if (e.key === 'Enter' && filteredItems.length > 0) {
           e.preventDefault();
-          switchToDM(filteredUsers[selectedIndex]);
+          selectCmdItem(selectedIndex);
         } else if (e.key === 'Escape') {
           closeCmdPalette();
         }
