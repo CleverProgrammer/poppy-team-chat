@@ -2300,61 +2300,44 @@
       return messages.map(m => `[${m.time}] ${m.sender}: ${m.text}`).join('\n');
     }
 
-    // Ragie RAG Integration
-    const RAGIE_API_KEY = 'tnt_CJV6pN13cI9_dm65sEDNvYvkHKtwheXepZg6tjUjGNrAWRZTG3LZTKk';
-
-    async function searchRagie(query) {
-      console.log('🔍 Ragie: Starting search for:', query);
+    // Notion Integration via Cloudflare Worker
+    async function searchNotion(query) {
+      console.log('📓 Notion: Searching for:', query);
       try {
-        const requestBody = {
-          query: query,
-          top_k: 10,
-          rerank: true
-        };
-        console.log('🔍 Ragie: Request body:', JSON.stringify(requestBody));
-
-        // Use Cloudflare Worker proxy since Ragie API doesn't allow browser requests
         const response = await fetch('https://dark-paper-7f6a.cleverprogrammer.workers.dev/', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${RAGIE_API_KEY}`
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify({ query })
         });
 
-        console.log('🔍 Ragie: Response status:', response.status);
+        console.log('📓 Notion: Response status:', response.status);
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('🔍 Ragie: Error response:', response.status, errorText);
+          console.error('📓 Notion: Error response:', response.status, errorText);
           return null;
         }
 
         const data = await response.json();
-        console.log('🔍 Ragie: SUCCESS! Got response with', data.scored_chunks?.length || 0, 'chunks');
+        const results = data.results || [];
+        console.log('📓 Notion: Found', results.length, 'pages');
 
-        // Handle different response formats
-        const chunks = data.scored_chunks || data.chunks || data.results || [];
-
-        if (chunks.length === 0) {
-          console.log('🔍 Ragie: No chunks found');
+        if (results.length === 0) {
           return null;
         }
 
-        // Format the chunks into context
-        const ragContext = chunks.map((chunk, i) => {
-          // Use document_name first (that's what Ragie returns), then fall back to metadata
-          const source = chunk.document_name || chunk.document_metadata?.source_url || 'Notion';
-          const text = chunk.text || chunk.content || '';
-          console.log(`🔍 Ragie chunk ${i + 1}:`, source, '- length:', text.length);
-          return `[Source: ${source}]\n${text}`;
+        // Format results into context
+        const notionContext = results.map((page, i) => {
+          console.log(`📓 Notion page ${i + 1}:`, page.title);
+          return `[${page.title}]\n${page.content}`;
         }).join('\n\n---\n\n');
 
-        console.log('🔍 Ragie: Total context length:', ragContext.length, 'chars');
-        return ragContext;
+        console.log('📓 Notion: Total context length:', notionContext.length, 'chars');
+        return notionContext;
       } catch (error) {
-        console.error('🔍 Ragie: FETCH ERROR:', error.message, error);
+        console.error('📓 Notion: FETCH ERROR:', error.message, error);
         return null;
       }
     }
@@ -2404,10 +2387,10 @@
         const docsContext = await getAllDocsContent();
         console.log('🤖 Poppy AI: Got docs context');
 
-        // Search Ragie for relevant knowledge from Notion
-        console.log('🤖 Poppy AI: Searching Ragie knowledge base...');
-        const ragieContext = await searchRagie(userQuestion);
-        console.log('🤖 Poppy AI: Ragie context:', ragieContext ? 'found' : 'none');
+        // Search Notion for relevant knowledge
+        console.log('🤖 Poppy AI: Searching Notion knowledge base...');
+        const notionContext = await searchNotion(userQuestion);
+        console.log('🤖 Poppy AI: Notion context:', notionContext ? 'found' : 'none');
 
         const systemPrompt = `You are Poppy, a friendly AI assistant in Poppy Chat.
 
@@ -2438,9 +2421,9 @@ ${docsContext ? `You have access to the team's documents. Use this knowledge to 
 ${docsContext}
 ---
 
-` : ''}${ragieContext ? `You also have access to the team's Notion knowledge base. Use this to answer questions:
+` : ''}${notionContext ? `You also have access to the team's Notion knowledge base. Use this to answer questions:
 ---
-${ragieContext}
+${notionContext}
 ---
 
 ` : ''}Be helpful, witty, and brief. Use line breaks between thoughts for easy reading.`;
@@ -2580,7 +2563,7 @@ ${ragieContext}
       try {
         // Fetch knowledge base context
         const docsContext = await getAllDocsContent();
-        const ragieContext = await searchRagie(question);
+        const notionContext = await searchNotion(question);
 
         let systemPrompt = `You are a helpful assistant. Give SHORT, direct answers that can be inserted into a chat message.
 NO markdown, NO formatting - just plain text.
@@ -2594,8 +2577,8 @@ Examples:
         if (docsContext) {
           systemPrompt += `\n\nYou have access to these team documents:\n${docsContext}`;
         }
-        if (ragieContext) {
-          systemPrompt += `\n\nYou also have access to the team's Notion knowledge base:\n${ragieContext}`;
+        if (notionContext) {
+          systemPrompt += `\n\nYou also have access to the team's Notion knowledge base:\n${notionContext}`;
         }
 
         const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -3054,6 +3037,8 @@ Examples:
 
       const q = query(messagesRef, orderBy('timestamp', 'asc'));
       unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        try {
+        console.log('Messages loaded:', snapshot.size, 'for chat:', currentChat);
         const messagesDiv = document.getElementById('messages');
 
         // Check for new messages (for notifications)
@@ -3099,7 +3084,7 @@ Examples:
           const msgId = docSnap.id;
           const isSent = currentUser && msg.senderId === currentUser.uid;
           const isAI = msg.isAI || msg.senderId === 'ai-poppy';
-          const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          const time = msg.timestamp ? new Date(msg.timestamp.toDate ? msg.timestamp.toDate() : msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
           const wrapperEl = document.createElement('div');
           wrapperEl.className = `message-wrapper ${isSent ? 'sent' : 'received'} ${isAI ? 'ai' : ''}`;
@@ -3178,6 +3163,11 @@ Examples:
 
         // Always scroll to bottom when new messages arrive
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } catch (err) {
+          console.error('Error rendering messages:', err);
+        }
+      }, (error) => {
+        console.error('Firestore onSnapshot error:', error);
       });
     }
 
