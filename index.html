@@ -3150,12 +3150,15 @@ Examples:
 
       // If user starts typing and nothing is focused, focus the message input
       const activeEl = document.activeElement;
-      const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      const isInputFocused = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
       const messageInput = document.getElementById('messageInput');
       const inputSection = document.getElementById('inputSection');
+      const docsOverlay = document.getElementById('docsOverlay');
+      const isDocsOpen = docsOverlay && !docsOverlay.classList.contains('hidden');
 
       // Check if input section is visible and user typed a printable character
-      if (!isInputFocused && messageInput && inputSection && !inputSection.classList.contains('hidden')) {
+      // Don't redirect to chat if docs modal is open
+      if (!isInputFocused && !isDocsOpen && messageInput && inputSection && !inputSection.classList.contains('hidden')) {
         // Only for printable characters (not modifier keys, arrows, etc.)
         if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
           messageInput.focus();
