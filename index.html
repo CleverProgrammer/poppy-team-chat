@@ -338,8 +338,20 @@
       align-self: flex-start;
     }
 
+    .message-sender {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      margin-left: 12px;
+    }
+
+    .message-wrapper.sent .message-sender {
+      display: none;
+    }
+
     .message {
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-radius: 18px;
       word-wrap: break-word;
       position: relative;
@@ -359,10 +371,7 @@
     }
 
     .message .sender {
-      font-size: 11px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      opacity: 0.8;
+      display: none;
     }
 
     .message .text {
@@ -371,10 +380,26 @@
     }
 
     .message .time {
+      position: absolute;
       font-size: 10px;
-      opacity: 0.6;
-      margin-top: 4px;
-      text-align: right;
+      color: var(--text-tertiary);
+      opacity: 0;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .message-wrapper.sent .time {
+      right: calc(100% + 8px);
+    }
+
+    .message-wrapper.received .time {
+      left: calc(100% + 8px);
+    }
+
+    .message-wrapper:hover .time {
+      opacity: 1;
     }
 
     /* Reactions */
@@ -1990,9 +2015,11 @@ Examples:
 
     // Load messages for current chat
     let currentMessagesPath = '';
+    let isInitialLoad = true;
 
     function loadMessages() {
       if (unsubscribeMessages) unsubscribeMessages();
+      isInitialLoad = true;
 
       let messagesRef;
       if (currentChat.type === 'channel') {
@@ -2060,9 +2087,9 @@ Examples:
           const reactionsHtml = renderReactions(msg.reactions || {}, msgId);
 
           const topReactions = getTopReactions(4);
-          const senderHtml = isAI
-            ? `<div class="sender">${escapeHtml(msg.sender)} <span class="ai-badge">AI</span></div>`
-            : (!isSent ? `<div class="sender">${escapeHtml(msg.sender)}</div>` : '');
+
+          // Sender name above the bubble (iMessage style) - only for received messages
+          const senderAboveHtml = !isSent ? `<div class="message-sender">${isAI ? '🤖 Poppy' : escapeHtml(msg.sender)}${isAI ? ' <span class="ai-badge">AI</span>' : ''}</div>` : '';
 
           // Reply preview if this message is a reply
           const replyHtml = msg.replyTo ? `
@@ -2073,8 +2100,8 @@ Examples:
           ` : '';
 
           wrapperEl.innerHTML = `
+            ${senderAboveHtml}
             <div class="message">
-              ${senderHtml}
               ${replyHtml}
               <div class="text">${formatMessageText(msg.text)}</div>
               <div class="time">${time}</div>
@@ -2128,7 +2155,11 @@ Examples:
           messagesDiv.appendChild(wrapperEl);
         });
 
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        // Only scroll to bottom on initial load, not on every update
+        if (isInitialLoad) {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          isInitialLoad = false;
+        }
       });
     }
 
